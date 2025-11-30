@@ -1,506 +1,995 @@
-# Technical Documentation: IMV Package
+# IMV Package - Technical Documentation
 
 ## Table of Contents
+
 1. [Overview](#overview)
-2. [Core Concepts](#core-concepts)
-3. [Module: metrics/shap_imv.py](#module-metricsshap_imvpy)
-4. [Module: metrics/multi_imv.py](#module-metricsmulti_imvpy)
-5. [Module: ablation/ablate_imv.py](#module-ablationablate_imvpy)
-6. [Mathematical Foundations](#mathematical-foundations)
-7. [Implementation Details](#implementation-details)
-8. [Performance Considerations](#performance-considerations)
+2. [Package Architecture](#package-architecture)
+3. [Module: imv/core.py](#module-imvcorepy)
+4. [Module: imv/binary.py](#module-imvbinarypy)
+5. [Module: imv/multiclass.py](#module-imvmulticlasspy)
+6. [Module: imv/ablation.py](#module-imvablationpy)
+7. [Mathematical Foundation](#mathematical-foundation)
+8. [Implementation Details](#implementation-details)
+9. [Usage Examples](#usage-examples)
+10. [Performance Considerations](#performance-considerations)
 
 ---
 
 ## Overview
 
-The IMV (Information Model Vigor) package provides a framework for quantifying feature importance and model performance using information-theoretic principles. The package consists of three main modules:
+The **IMV (Information Model Vigor)** package provides a unified framework for quantifying the information contribution of features in machine learning models across different contexts:
 
-- **SHAP-IMV** (`metrics/shap_imv.py`): Binary classification with Shapley value attribution
-- **Multi-class IMV** (`metrics/multi_imv.py`): Multi-class classification (3+ classes)
-- **Ablation IMV** (`ablation/ablate_imv.py`): Deep learning ablation studies
+- **Binary Classification**: SHAP-IMV with Shapley value attribution
+- **Multiclass Classification**: Pairwise IMV matrices for multi-outcome problems
+- **Deep Learning**: Ablation studies for neural network architectures
 
-### Key Innovation
+### Key Innovations
 
-Traditional metrics (accuracy, F1) measure prediction correctness but not information content. IMV quantifies how much information a model captures about the true labels, enabling:
-- Fair comparison between models with different architectures
-- Feature importance without model-specific assumptions
-- Ablation study quantification in deep learning
-
----
-
-## Core Concepts
-
-### 1. Information Weight (w)
-
-The information weight represents the "certainty" or "information content" of predictions:
-
-```python
-w = argmin_p |p*log(p) + (1-p)*log(1-p) - log(LL)|
-```
-
-Where:
-- `p` ∈ [0.5, 0.999]: Probability weight
-- `LL`: Log-likelihood of predictions
-- Result: Higher `w` means more information
-
-### 2. IMV Score
-
-IMV measures relative information gain:
-
-```python
-IMV = (w_enhanced - w_basic) / w_basic
-```
-
-**Interpretation:**
-- `IMV = 0.10` → Enhanced model has 10% more information
-- `IMV = 0` → Models are equivalent
-- `IMV < 0` → Enhanced model is worse (rare)
-
-### 3. SHAP-IMV Values
-
-Shapley values applied to IMV provide fair feature attribution:
-
-```python
-SHAP-IMV(v) = Σ [weight(|S|, n) * (IMV(S ∪ {v}) - IMV(S))]
-```
-
-Where:
-- `v`: Feature being evaluated
-- `S`: All subsets not containing `v`
-- `weight`: Shapley weight based on coalition size
+1. **Unified Core Functions**: All IMV variants share the same mathematical foundation in `imv/core.py`
+2. **DRY Principle**: Eliminates code duplication (~250 lines) from previous structure
+3. **Backward Compatible**: Old class names preserved as aliases
+4. **Flexible API**: Works with any scikit-learn compatible model
 
 ---
 
-## Module: metrics/shap_imv.py
+## Package Architecture
 
-### Architecture
+### New Structure (Post-Reorganization)
 
 ```
-IMVEvaluator
-├── Core Computations
-│   ├── ll()           # Log-likelihood geometric mean
-│   ├── get_w()        # Information weight via optimization
-│   └── calculate_imv() # Relative information gain
-├── Model Evaluation
-│   ├── compute_imv_method()  # Single feature combination
-│   └── run_evaluation()      # All combinations (parallel)
-├── Shapley Attribution
-│   ├── calculate_weight()           # Shapley weights
-│   ├── calculate_imvshapley_value() # Per-feature SHAP-IMV
-│   └── evaluate_imvshapley()        # All features + visualization
-└── Visualization
-    └── plot_single_var_combinations_layered_violin_centralized_zero()
+imv/
+├── __init__.py          # Package exports and API
+├── core.py              # Shared IMV mathematical functions
+├── binary.py            # Binary classification IMV (SHAP)
+├── multiclass.py        # Multiclass classification IMV
+├── ablation.py          # Deep learning ablation studies
+├── imv.py              # Original IMV utilities
+└── utils.py            # Helper functions
 ```
 
-### Workflow
+### Design Principles
 
-1. **Initialization**
-   ```python
-   evaluator = IMVEvaluator(
-       data=df,
-       outcome_variable='target',
-       optional_explanatory_variables=['age', 'income', 'education'],
-       model_creator=lambda: LogisticRegression(),
-       split_method='kfold',
-       n_splits=5,
-       model_type='classification'
-   )
-   ```
+1. **Single Source of Truth**: Core IMV functions (`ll()`, `get_w()`, etc.) defined once
+2. **Separation of Concerns**: Each module handles a specific use case
+3. **Composability**: Modules import from core rather than duplicating code
+4. **Testability**: Core functions can be tested independently
 
-2. **Compute All Combinations**
-   ```python
-   evaluator.run_evaluation()
-   # Computes 2^n IMV scores where n = number of features
-   # Uses joblib Parallel with n_jobs=-1 for speed
-   ```
+### Import Patterns
 
-3. **Shapley Attribution**
-   ```python
-   evaluator.evaluate_imvshapley()
-   # Computes SHAP-IMV for each feature
-   # Creates visualization
-   ```
-
-### Key Implementation Details
-
-#### Parallel Processing
 ```python
-with tqdm_joblib(tqdm(desc="Evaluating IMV combinations", total=len(combinations_list))):
-    parallel_results = Parallel(n_jobs=-1)(
-        delayed(self.compute_imv_method)(subset) for subset in combinations_list
-    )
-```
-- Uses all CPU cores (`n_jobs=-1`)
-- Progress bar via `tqdm_joblib`
-- Each combination evaluated independently
+# Modern imports
+from imv import BinaryIMV, MulticlassIMV, AblationIMV
+from imv import ll, get_w, calculate_imv
 
-#### Cross-Validation
-```python
-if self.split_method == 'kfold':
-    kf = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_seed)
-    for train_index, test_index in kf.split(X):
-        # Train null model (constant only)
-        model_basic.fit(X_train[['constant']], y_train)
-        # Train enhanced model (with features)
-        model_enhanced.fit(X_train, y_train)
-        # Compute IMV on test set
+# Backward compatible
+from imv import IMVEvaluator, MultinomialIMV
 ```
-
-#### Optimization Precision
-```python
-res = minimize(cls.minimize_me, guess, args=(a,), 
-               options={'ftol': 0, 'gtol': 1e-09},
-               method='L-BFGS-B', bounds=[(0.5, 0.999)])
-```
-- L-BFGS-B for bounded optimization
-- Tight gradient tolerance (1e-09)
-- Bounds prevent edge cases (p=0.5 or p=1)
 
 ---
 
-## Module: metrics/multi_imv.py
+## Module: imv/core.py
 
-### Architecture
+### Purpose
 
-```
-MultinomialIMV
-├── Core Computations (Binary)
-│   ├── ll()          # Log-likelihood (binary)
-│   ├── get_w()       # Information weight
-│   └── minimize_me() # Optimization objective
-├── One-vs-All
-│   ├── one_vs_all_single_fold()  # Single fold, all classes
-│   └── k_fold_one_vs_all()       # K-fold cross-validation
-├── Pairwise Matrix
-│   ├── multinominal_imv_matrix() # Single fold IMV matrix
-│   └── k_fold_imv_matrix()       # K-fold average
-└── Visualization
-    ├── multinomial_IMV_heatmap()  # Pairwise confusion matrix
-    └── multinomial_IMV_boxplot()  # One-vs-all distribution
-```
+Contains the fundamental mathematical functions for IMV calculation. All other modules import from here to avoid duplication.
 
-### Two Evaluation Approaches
+### Key Functions
 
-#### 1. One-vs-All IMV
-Treats each class as positive vs all others combined:
+#### `ll(x, p, epsilon=1e-9)`
+
+**Log-Likelihood Geometric Mean**
+
+Calculates the geometric mean of likelihood values for binary predictions.
 
 ```python
-imv_results, imv_average = evaluator.k_fold_one_vs_all()
-# Returns:
-# - imv_results: (n_folds, n_classes) array
-# - imv_average: (n_classes,) mean across folds
-```
-
-**Use Case:** Which class is most distinguishable from others?
-
-#### 2. Pairwise IMV Matrix
-Computes IMV for every pair of classes:
-
-```python
-matrices_list, matrix_avg = evaluator.k_fold_imv_matrix()
-# Returns:
-# - matrices_list: List of (n_classes, n_classes) matrices
-# - matrix_avg: Average matrix across folds
-```
-
-**Use Case:** Which class pairs are most/least distinguishable?
-
-### Key Implementation Details
-
-#### Probability Normalization
-For pairwise comparison of classes i and j:
-```python
-# Filter to only these two classes
-mask = data[outcome_variable].isin([outcome_i, outcome_j])
-
-# Normalize probabilities for binary comparison
-p_b = p_base[mask, i] / np.sum(p_base[mask][:, [i, j]], axis=1)
-p_e = p_enhanced[mask, i] / np.sum(p_enhanced[mask][:, [i, j]], axis=1)
-```
-This converts multi-class probabilities to binary probabilities for IMV calculation.
-
-#### Index Offset Handling
-```python
-# Determine if outcomes start at 0 or 1
-index_offset = 0 if outcomes[0] == 0 else 1
-
-for outcome in outcomes:
-    # Access probability array with correct index
-    p_b = p_base[:, outcome - index_offset]
-```
-Handles datasets with 0-indexed classes (0, 1, 2) vs 1-indexed (1, 2, 3).
-
-#### Null Model
-```python
-# Base model uses only constant (intercept)
-X_train_constant = np.ones((X_train.shape[0], 1))
-model_basic.fit(X_train_constant, y_train)
-```
-Multi-class null model predicts class frequencies.
-
----
-
-## Module: ablation/ablate_imv.py
-
-### Architecture
-
-```
-AblationIMV
-├── Device Management
-│   ├── __init__()     # Auto-detect CUDA/MPS/CPU
-│   └── set_seed()     # Reproducibility across devices
-├── Core IMV Computations
-│   ├── ll()           # Log-likelihood
-│   ├── get_w()        # Information weight (high precision)
-│   └── calculate_imv() # IMV score
-├── Model Ablation
-│   ├── reduce_bert_layers()     # Layer reduction
-│   └── train_and_evaluate()     # Train + metrics
-├── Comparative Analysis
-│   ├── calculate_imv_matrix()   # Pairwise model comparison
-│   └── average_imv_matrices()   # Multi-seed averaging
-└── [Extensible for other ablations]
-```
-
-### Hardware Support
-
-#### Automatic Device Detection
-```python
-# Priority: CUDA > MPS > CPU
-if torch.cuda.is_available():
-    self.device = torch.device("cuda")
-elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-    self.device = torch.device("mps")  # Apple Silicon
-else:
-    self.device = torch.device("cpu")
-```
-
-**Supported Platforms:**
-- NVIDIA GPUs (CUDA)
-- Apple M1/M2/M3 (MPS) - Requires PyTorch ≥ 1.12
-- CPU fallback
-
-#### Reproducibility Across Devices
-```python
-def set_seed(self, seed=None):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-        torch.mps.manual_seed(seed)
-```
-
-### Ablation Study Workflow
-
-1. **Setup Ablation Variants**
-   ```python
-   ablator = AblationIMV(random_seed=42)
-   
-   # Create model variants
-   model_full = DistilBertForSequenceClassification.from_pretrained(
-       "distilbert-base-uncased", num_labels=2
-   )
-   model_4layer = ablator.reduce_bert_layers(model_full, 4)
-   model_2layer = ablator.reduce_bert_layers(model_full, 2)
-   ```
-
-2. **Train Each Variant**
-   ```python
-   results = {}
-   for name, model in [('6-layer', model_full), ('4-layer', model_4layer)]:
-       result = ablator.train_and_evaluate(
-           model, train_loader, test_loader,
-           num_epochs=3, lr=2e-5, seed=42
-       )
-       results[name] = result['test_predictions']
-   ```
-
-3. **Compute IMV Matrix**
-   ```python
-   imv_matrix = ablator.calculate_imv_matrix(results)
-   # Shows pairwise IMV comparisons
-   ```
-
-4. **Multi-Seed Averaging**
-   ```python
-   matrices = []
-   for seed in [42, 123, 456]:
-       # Repeat study with different seed
-       imv_mat = run_ablation_study(seed)
-       matrices.append(imv_mat)
-   
-   avg_matrix = ablator.average_imv_matrices(matrices)
-   ```
-
-### Key Implementation Details
-
-#### High-Precision Optimization
-```python
-res = minimize(AblationIMV.minimize_me, guess, args=a,
-               options={'ftol': 0, 'gtol': 1e-20},  # Note: 1e-20 vs 1e-09
-               method='L-BFGS-B', bounds=bounds)
-```
-Uses tighter tolerance than metrics modules for precise deep learning comparisons.
-
-#### Training Loop with Device Transfer
-```python
-for batch in train_dataloader:
-    # Move batch to GPU/CPU
-    batch = {k: v.to(self.device) for k, v in batch.items()}
+def ll(x, p, epsilon=1e-9):
+    """
+    Calculate log-likelihood geometric mean.
     
-    outputs = model(**batch)
-    loss = outputs.loss
-    
-    # Standard PyTorch training
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+    Parameters
+    ----------
+    x : array-like
+        True binary labels (0 or 1)
+    p : array-like
+        Predicted probabilities for positive class
+    epsilon : float, default=1e-9
+        Smoothing factor for numerical stability
+        
+    Returns
+    -------
+    float
+        Geometric mean of likelihood values
+    """
 ```
 
-#### Layer Ablation
-```python
-@staticmethod
-def reduce_bert_layers(model, num_layers_to_keep):
-    # Slice ModuleList to keep first N layers
-    model.distilbert.transformer.layer = torch.nn.ModuleList(
-        model.distilbert.transformer.layer[:num_layers_to_keep]
-    )
-    return model
-```
-Modifies model in-place by removing later layers.
+**Mathematical Formula:**
 
----
-
-## Mathematical Foundations
-
-### Log-Likelihood Geometric Mean
-
-**Formula:**
-```
-LL(x, p) = exp(mean(x*log(p + ε) + (1-x)*log(1-p + ε)))
-```
-
-**Properties:**
-- Range: (0, 1)
-- Higher = better predictions
-- ε = 1e-9 for numerical stability
+$$
+\text{LL}(x, p) = \exp\left(\frac{1}{n}\sum_{i=1}^{n} \left[x_i \log(p_i + \epsilon) + (1-x_i)\log(1-p_i + \epsilon)\right]\right)
+$$
 
 **Why Geometric Mean?**
-- Multiplicative nature of probabilities
-- Less sensitive to outliers than arithmetic mean
-- Information-theoretic interpretation
+- More robust to outliers than arithmetic mean
+- Natural measure for likelihood values (multiplicative quantities)
+- Handles probability products effectively
 
-### Information Weight Optimization
+**Numerical Stability:**
+- `epsilon = 1e-9` prevents log(0) errors
+- Working in log-space avoids underflow
+- Exp at the end recovers the geometric mean
 
-**Objective:**
+#### `minimize_me(p, a)`
+
+**Optimization Objective Function**
+
+Helper function for finding the probability corresponding to a given likelihood.
+
+```python
+def minimize_me(p, a):
+    """
+    Objective function for information weight optimization.
+    
+    Parameters
+    ----------
+    p : float
+        Probability value being optimized
+    a : float
+        Target likelihood value from ll()
+        
+    Returns
+    -------
+    float
+        Absolute difference (objective to minimize)
+    """
 ```
-minimize |p*log(p) + (1-p)*log(1-p) - log(LL)|
+
+**Mathematical Formula:**
+
+$$
+f(p, a) = \left| p \log(p) + (1-p)\log(1-p) - \log(a) \right|
+$$
+
+This is the **binary entropy** equation solved for the probability that produces likelihood `a`.
+
+#### `get_w(a, guess=0.5, bounds=[(0.5, 0.999)], tolerance=1e-09)`
+
+**Information Weight Calculation**
+
+Computes the information weight corresponding to a likelihood value by solving an optimization problem.
+
+```python
+def get_w(a, guess=0.5, bounds=[(0.5, 0.999)], tolerance=1e-09):
+    """
+    Compute information weight from likelihood value.
+    
+    Parameters
+    ----------
+    a : float
+        Likelihood value from ll() function
+    guess : float, default=0.5
+        Initial guess for L-BFGS-B optimizer
+    bounds : list of tuples, default=[(0.5, 0.999)]
+        Probability bounds for optimization
+    tolerance : float, default=1e-09
+        Optimization tolerance (gtol)
+        
+    Returns
+    -------
+    float
+        Information weight in range [0.5, 0.999]
+    """
 ```
 
-**Entropy Connection:**
-The left term `p*log(p) + (1-p)*log(1-p)` is binary entropy. We're finding the probability `p` whose entropy matches the observed likelihood.
+**Process:**
+1. Takes likelihood `a` from `ll()`
+2. Solves for probability `p` where entropy equals log-likelihood
+3. Uses L-BFGS-B optimization with tight tolerance
+4. Returns probability weight representing information content
 
-**Why [0.5, 0.999] Bounds?**
-- 0.5: Random guessing (no information)
-- 0.999: Near-perfect prediction (avoid log(0))
-- Bounded optimization more stable than unconstrained
+**Interpretation:**
+- `w = 0.5`: No information (random guessing)
+- `w → 1.0`: Perfect information (certainty)
+- Higher weight = more information in predictions
 
-### Shapley Values
+#### `calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9)`
 
-**Formula:**
+**IMV Score Calculation**
+
+Main function for computing the relative information gain between two models.
+
+```python
+def calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9):
+    """
+    Calculate IMV score comparing two model variants.
+    
+    Parameters
+    ----------
+    y_basic : array-like
+        Predicted probabilities from baseline/null model
+    y_enhanced : array-like
+        Predicted probabilities from enhanced/full model
+    y : array-like
+        True binary labels
+    epsilon : float, default=1e-9
+        Smoothing factor for numerical stability
+        
+    Returns
+    -------
+    float
+        IMV score (relative information gain)
+    """
 ```
-φ(v) = Σ_S [|S|!(n-|S|-1)! / n!] * [V(S ∪ {v}) - V(S)]
-```
+
+**Mathematical Formula:**
+
+$$
+\text{IMV} = \frac{w_{\text{enhanced}} - w_{\text{basic}}}{w_{\text{basic}}}
+$$
 
 Where:
-- `φ(v)`: Shapley value for feature v
-- `S`: Subset not containing v
-- `V(·)`: Characteristic function (IMV)
-- Weight: Depends on coalition size
+- $w_{\text{basic}} = \text{get\_w}(\text{ll}(y, p_{\text{basic}}))$
+- $w_{\text{enhanced}} = \text{get\_w}(\text{ll}(y, p_{\text{enhanced}}))$
 
-**Properties:**
-- **Efficiency:** Sum of all Shapley values = Total IMV
-- **Symmetry:** If features contribute equally, equal Shapley values
-- **Dummy:** If feature contributes nothing, Shapley value = 0
-- **Additivity:** Shapley values are linear
+**Interpretation:**
+- **IMV > 0**: Enhanced model has more information (features help)
+- **IMV ≈ 0**: Models are equivalent (features don't help)
+- **IMV < 0**: Basic model better (rare, suggests overfitting)
+
+**Example Values:**
+- IMV = 0.05 → 5% information gain
+- IMV = 0.20 → 20% information gain
+- IMV = 0.50 → 50% information gain
+
+#### `imv_from_probs(p_basic, p_enhanced, y, epsilon=1e-9)`
+
+**Convenience Alias**
+
+Direct alias for `calculate_imv()` with clearer parameter names.
+
+---
+
+## Module: imv/binary.py
+
+### Purpose
+
+Implements binary classification IMV with SHAP (Shapley value) attribution for feature importance analysis.
+
+### Class: `BinaryIMV`
+
+**Main Features:**
+- K-fold cross-validation or train/test split
+- Shapley value calculation for each feature
+- Comprehensive visualization suite
+- Integration with any scikit-learn compatible model
+
+### Key Attributes
+
+```python
+class BinaryIMV:
+    def __init__(
+        self,
+        data,                              # DataFrame with features and outcome
+        outcome_variable,                  # Target column name
+        optional_explanatory_variables,    # List of feature columns
+        model_creator,                     # Function returning ML model
+        split_method='kfold',              # 'kfold' or 'train_test'
+        n_splits=5,                        # Number of CV folds
+        prop_test=0.2,                     # Test set proportion
+        model_type='classification',       # 'classification' or 'regression'
+        random_state=None                  # Random seed
+    ):
+```
+
+### Core Methods
+
+#### `run_evaluation()`
+
+Executes the full IMV evaluation pipeline with Shapley value attribution.
+
+**Process:**
+1. Split data (k-fold or train/test)
+2. For each feature subset:
+   - Train null model (intercept only)
+   - Train enhanced model (with features)
+   - Calculate IMV for feature contribution
+3. Compute Shapley values using coalitional game theory
+4. Aggregate results across folds
+
+**Returns:**
+- DataFrame with feature IMV scores and Shapley values
+
+#### `evaluate_imvshapley()`
+
+Alternative evaluation method with different feature selection strategy.
+
+#### `calculate_imv_score(y_basic, y_enhanced, y)`
+
+**Instance method wrapper** for `core.calculate_imv()`.
+
+```python
+def calculate_imv_score(self, y_basic, y_enhanced, y):
+    """Calculate IMV using shared core function."""
+    return calculate_imv(y_basic, y_enhanced, y)
+```
+
+### Visualization Methods
+
+#### `plot_shapley_values(results, figsize=(10, 6))`
+
+Bar plot of Shapley values showing feature importance.
+
+#### `plot_imv_heatmap(results, figsize=(12, 8))`
+
+Heatmap showing IMV contributions by feature and fold.
+
+#### `plot_feature_importance(results, figsize=(10, 6))`
+
+Combined visualization of mean IMV and standard deviation.
+
+#### `plot_coalition_analysis(results, figsize=(12, 8))`
+
+Detailed analysis of feature coalitions and interactions.
+
+### Usage Example
+
+```python
+from imv import BinaryIMV
+from sklearn.linear_model import LogisticRegression
+
+# Define model creator
+def create_model():
+    return LogisticRegression(max_iter=1000)
+
+# Initialize evaluator
+evaluator = BinaryIMV(
+    data=df,
+    outcome_variable='target',
+    optional_explanatory_variables=['age', 'income', 'education'],
+    model_creator=create_model,
+    split_method='kfold',
+    n_splits=5
+)
+
+# Run evaluation
+results = evaluator.run_evaluation()
+
+# Visualize
+fig = evaluator.plot_shapley_values(results)
+```
+
+### Shapley Value Calculation
+
+**Coalitional Game Theory Approach:**
+
+For each feature $i$, the Shapley value is:
+
+$$
+\phi_i = \sum_{S \subseteq N \setminus \{i\}} \frac{|S|!(|N|-|S|-1)!}{|N|!} [v(S \cup \{i\}) - v(S)]
+$$
+
+Where:
+- $N$ = set of all features
+- $S$ = coalition (subset) of features
+- $v(S)$ = IMV value for coalition $S$
+- Weights ensure fair attribution
+
+**Implementation:**
+1. Generate all feature subsets (power set)
+2. Calculate IMV for each subset
+3. Compute weighted marginal contributions
+4. Aggregate using Shapley formula
+
+---
+
+## Module: imv/multiclass.py
+
+### Purpose
+
+Extends IMV to multiclass classification problems using pairwise comparisons and one-vs-all strategies.
+
+### Class: `MulticlassIMV`
+
+**Main Features:**
+- Pairwise IMV matrices (class i vs class j)
+- One-vs-all IMV scores
+- K-fold cross-validation
+- Heatmap and box plot visualizations
+
+### Key Methods
+
+#### `multinominal_imv_matrix(data, outcome_variable, p_base, p_enhanced)`
+
+Creates pairwise IMV confusion matrix for all class combinations.
+
+**Process:**
+1. For each class pair (i, j):
+   - Filter data to only classes i and j
+   - Normalize probabilities for binary comparison
+   - Calculate IMV(i vs j)
+2. Construct matrix with IMV values
+
+**Returns:**
+- DataFrame: n_classes × n_classes matrix
+- Element (i,j) = IMV discriminating class i from class j
+- Diagonal is zero (no discrimination within same class)
+
+**Interpretation:**
+- High IMV(i,j): Features help distinguish class i from class j
+- Low IMV(i,j): Little information for this pair
+- Matrix generally asymmetric: IMV(i,j) ≠ IMV(j,i)
+
+#### `k_fold_imv_matrix(data, outcome_variable, features, k=5)`
+
+Computes average pairwise IMV matrix across k-fold CV.
+
+**Benefits:**
+- Uses all data for training and evaluation
+- Reduces variance from single split
+- Out-of-sample predictions
+- More robust estimates
+
+#### `k_fold_one_vs_all(data, outcome_variable, features, k=5)`
+
+One-vs-all approach: each class vs all others combined.
+
+**Process:**
+1. For each class:
+   - Treat as binary problem (class vs rest)
+   - Calculate IMV using k-fold CV
+2. Return DataFrame with IMV per class
+
+**Use Case:**
+- Simpler than pairwise comparisons
+- Good for identifying which classes benefit most from features
+- Faster computation for many classes
+
+### Visualization Methods
+
+#### `visualize_imv_matrix(imv_matrix, figsize=(10, 8))`
+
+Heatmap of pairwise IMV matrix.
+
+**Features:**
+- Annotated cells with IMV values
+- Color scale showing information gain
+- Class labels on axes
+
+#### `plot_ova_results(ova_results, figsize=(10, 6))`
+
+Bar plot of one-vs-all IMV scores.
+
+#### `plot_multi_imv_distributions(imv_results, figsize=(10, 6))`
+
+Box plots showing IMV distributions across outcomes.
+
+### Usage Example
+
+```python
+from imv import MulticlassIMV
+
+# Initialize
+evaluator = MulticlassIMV()
+
+# Pairwise IMV matrix
+imv_matrix = evaluator.k_fold_imv_matrix(
+    data=df,
+    outcome_variable='species',
+    features=['sepal_length', 'sepal_width'],
+    k=5
+)
+
+# Visualize
+fig = evaluator.visualize_imv_matrix(imv_matrix)
+
+# One-vs-all
+ova_results = evaluator.k_fold_one_vs_all(
+    data=df,
+    outcome_variable='species',
+    features=['sepal_length', 'sepal_width'],
+    k=5
+)
+```
+
+---
+
+## Module: imv/ablation.py
+
+### Purpose
+
+Applies IMV to deep learning models (especially transformers) to quantify the information contribution of architectural components through ablation studies.
+
+### Class: `AblationIMV`
+
+**Main Features:**
+- Automatic GPU detection (CUDA > MPS > CPU)
+- Transformer layer reduction
+- Training and evaluation pipeline
+- IMV matrices for model comparisons
+
+### Key Attributes
+
+```python
+class AblationIMV:
+    def __init__(self, random_seed=42):
+        """
+        Initialize with automatic device detection.
+        
+        Device Priority:
+        1. CUDA (NVIDIA GPUs)
+        2. MPS (Apple Silicon)
+        3. CPU (fallback)
+        """
+```
+
+### Device Management
+
+```python
+# Automatic detection
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+```
+
+### Core Methods
+
+#### `reduce_bert_layers(model, num_layers_to_keep)`
+
+Performs layer ablation by removing transformer layers.
+
+**Parameters:**
+- `model`: DistilBERT or similar transformer
+- `num_layers_to_keep`: Layers to keep from beginning
+
+**Process:**
+1. Access model's transformer layers
+2. Slice to keep only first N layers
+3. Return modified model (in-place)
+
+**Use Case:**
+- Measure importance of model depth
+- Study layer-wise contributions
+- Identify diminishing returns
+
+#### `train_and_evaluate(model, train_dataloader, test_dataloader, ...)`
+
+Complete training and evaluation pipeline.
+
+**Parameters:**
+- Learning rate, epochs, warmup steps
+- Scheduler configuration
+- Progress tracking with tqdm
+
+**Returns:**
+- Trained model
+- Training history
+- Test predictions
+- Performance metrics
+
+#### `calculate_imv_matrix(predictions_dict, y, prob_column='prob_positive')`
+
+Creates IMV matrix comparing different model variants.
+
+**Process:**
+1. For each model pair (i, j):
+   - Use model i as "enhanced"
+   - Use model j as "basic"
+   - Calculate IMV(i vs j)
+2. Construct comparison matrix
+
+**Use Case:**
+- Compare 6-layer vs 3-layer model
+- Quantify information loss from ablation
+- Identify critical components
+
+#### `average_imv_matrices(matrices_list)`
+
+Averages IMV matrices across multiple runs.
+
+**Benefits:**
+- Reduces random variation
+- More stable estimates
+- Statistical confidence
+
+### Usage Example
+
+```python
+from imv import AblationIMV
+from transformers import DistilBertForSequenceClassification
+
+# Initialize
+ablation = AblationIMV(random_seed=42)
+
+# Create models with different depths
+model_6layer = DistilBertForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=2
+)
+
+model_3layer = DistilBertForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=2
+)
+model_3layer = ablation.reduce_bert_layers(model_3layer, 3)
+
+# Train both models
+model_6layer = ablation.train_and_evaluate(
+    model_6layer, train_dl, test_dl, epochs=3
+)
+model_3layer = ablation.train_and_evaluate(
+    model_3layer, train_dl, test_dl, epochs=3
+)
+
+# Get predictions
+predictions = {
+    '6-layer': predict(model_6layer, test_dl),
+    '3-layer': predict(model_3layer, test_dl)
+}
+
+# Calculate IMV
+imv_matrix = ablation.calculate_imv_matrix(
+    predictions, y_test, prob_column='prob_positive'
+)
+```
+
+---
+
+## Mathematical Foundation
+
+### Information Theory Basis
+
+IMV is grounded in **information theory** and **statistical decision theory**.
+
+#### 1. Shannon Entropy
+
+Binary entropy for probability $p$:
+
+$$
+H(p) = -p \log_2(p) - (1-p)\log_2(1-p)
+$$
+
+- Measures uncertainty/information content
+- Maximum at $p = 0.5$ (maximum uncertainty)
+- Minimum at $p = 0, 1$ (certainty)
+
+#### 2. Kullback-Leibler Divergence
+
+Information gain from model predictions:
+
+$$
+D_{KL}(P \| Q) = \sum_i P(i) \log\frac{P(i)}{Q(i)}
+$$
+
+Where:
+- $P$ = enhanced model distribution
+- $Q$ = baseline model distribution
+
+IMV approximates this divergence using likelihood ratios.
+
+#### 3. Geometric Mean Likelihood
+
+Why geometric mean for likelihood?
+
+**Arithmetic Mean:**
+$$
+\bar{L}_{\text{arithmetic}} = \frac{1}{n}\sum_{i=1}^{n} L_i
+$$
+
+**Geometric Mean:**
+$$
+\bar{L}_{\text{geometric}} = \left(\prod_{i=1}^{n} L_i\right)^{1/n} = \exp\left(\frac{1}{n}\sum_{i=1}^{n} \log L_i\right)
+$$
+
+**Advantages of Geometric Mean:**
+- Natural for multiplicative quantities (probabilities)
+- More robust to outliers
+- Relates directly to entropy
+- Preserves likelihood ordering
+
+### IMV Derivation
+
+**Step 1: Likelihood**
+
+For binary outcome $y \in \{0, 1\}$ and prediction $p$:
+
+$$
+L(y, p) = p^y (1-p)^{1-y}
+$$
+
+**Step 2: Geometric Mean Likelihood**
+
+$$
+\bar{L} = \exp\left(\frac{1}{n}\sum_{i=1}^{n} \left[y_i \log p_i + (1-y_i)\log(1-p_i)\right]\right)
+$$
+
+**Step 3: Information Weight**
+
+Solve for $w$ where binary entropy equals log-likelihood:
+
+$$
+-w\log w - (1-w)\log(1-w) = \log \bar{L}
+$$
+
+This gives weight $w \in [0.5, 1)$ representing information content.
+
+**Step 4: IMV Score**
+
+Relative information gain:
+
+$$
+\text{IMV} = \frac{w_{\text{enhanced}} - w_{\text{basic}}}{w_{\text{basic}}}
+$$
+
+### Properties
+
+1. **Scale Invariant**: IMV is unitless (percentage gain)
+2. **Bounded Below**: IMV > -1 (can't lose all information)
+3. **Unbounded Above**: IMV can be arbitrarily large
+4. **Additive**: For independent features, IMVs approximately add
 
 ---
 
 ## Implementation Details
 
-### Memory Management
+### Optimization Strategy
 
-#### SHAP-IMV Power Set
-For n features, computes 2^n combinations:
-- n=5: 32 combinations (fast)
-- n=10: 1024 combinations (manageable)
-- n=15: 32,768 combinations (slow)
-- n=20: 1,048,576 combinations (infeasible)
+#### L-BFGS-B Algorithm
 
-**Recommendation:** Use SHAP-IMV for n ≤ 12 features.
+Used in `get_w()` for finding information weights.
 
-#### Multi-class IMV
-For k classes:
-- One-vs-All: k models per fold
-- Pairwise Matrix: k*(k-1) comparisons per fold
+**Why L-BFGS-B?**
+- Limited-memory (efficient for single variable)
+- Handles bounds naturally
+- Quasi-Newton method (fast convergence)
+- No gradient needed (uses finite differences)
 
-**Memory:** O(k² * n_samples * n_folds)
+**Configuration:**
+```python
+res = minimize(
+    minimize_me,
+    guess=0.5,
+    args=a,
+    method='L-BFGS-B',
+    bounds=[(0.5, 0.999)],
+    options={'ftol': 0, 'gtol': 1e-09}
+)
+```
 
-#### Ablation IMV
-Deep learning models are memory-intensive:
-- DistilBERT: ~250MB
-- BERT: ~400MB
-- GPT-2: ~500MB
-
-**Recommendation:** 
-- Batch size 8-16 for 8GB GPU
-- Batch size 32-64 for 16GB+ GPU
-- Use gradient accumulation for larger effective batches
+**Tolerances:**
+- `ftol=0`: No function value tolerance (force gradient check)
+- `gtol=1e-09`: Very tight gradient tolerance (high precision)
 
 ### Numerical Stability
 
 #### Epsilon Smoothing
+
 ```python
 epsilon = 1e-9
-z = (np.log(p + epsilon) * x) + (np.log(1 - p + epsilon) * (1 - x))
+log_term = np.log(p + epsilon)
 ```
-Prevents `log(0)` when predictions are exactly 0 or 1.
 
-#### Bounded Optimization
+**Purpose:**
+- Prevents `log(0)` → `-inf`
+- Prevents division by zero
+- Minimal impact on valid probabilities (p > 0.001)
+
+#### Probability Bounds
+
 ```python
 bounds = [(0.5, 0.999)]
 ```
-Prevents optimization from exploring extreme probabilities.
 
-#### Loss Function Choice
-For ablation studies, use:
-- **CrossEntropyLoss**: Built into HuggingFace models
-- **Focal Loss**: For imbalanced datasets
-- **Label Smoothing**: Improves calibration
+**Rationale:**
+- Lower bound 0.5: No information = random guessing
+- Upper bound 0.999: Prevent numerical issues near 1.0
+- Allows 99.9% certainty (sufficient for practical use)
 
-### Parallel Processing
+### Performance Optimization
 
-#### CPU Parallelism (SHAP-IMV)
+#### Vectorization
+
+Core functions use NumPy vectorization:
+
 ```python
-Parallel(n_jobs=-1)(delayed(compute_imv_method)(subset) for subset in combinations)
+# Vectorized likelihood calculation
+z = (np.log(p + epsilon) * x) + (np.log(1 - p + epsilon) * (1 - x))
+return np.exp(np.sum(z) / len(z))
 ```
-- Uses all CPU cores
-- Each combination is independent
-- Linear speedup with cores
 
-#### GPU Parallelism (Ablation IMV)
+**Benefits:**
+- 10-100x faster than Python loops
+- Leverages BLAS/LAPACK
+- Cache-friendly memory access
+
+#### Memory Efficiency
+
+- Uses generators for power set enumeration
+- Streams predictions in batches
+- Clears intermediate arrays
+
+#### Parallel Processing
+
+Potential for parallelization:
+- Shapley value calculations (independent coalitions)
+- K-fold cross-validation (independent folds)
+- Pairwise IMV comparisons (independent pairs)
+
+---
+
+## Usage Examples
+
+### Example 1: Binary Classification with Shapley Values
+
 ```python
-# Data parallelism
-model = torch.nn.DataParallel(model)
+from imv import BinaryIMV
+from sklearn.linear_model import LogisticRegression
+import pandas as pd
 
-# Distributed training
-torch.distributed.init_process_group(backend='nccl')
-model = DistributedDataParallel(model)
+# Load data
+df = pd.read_csv('adult_income.csv')
+
+# Define model creator
+def create_model():
+    return LogisticRegression(max_iter=1000, random_state=42)
+
+# Initialize evaluator
+evaluator = BinaryIMV(
+    data=df,
+    outcome_variable='income',
+    optional_explanatory_variables=['age', 'education', 'hours_per_week'],
+    model_creator=create_model,
+    split_method='kfold',
+    n_splits=5,
+    random_state=42
+)
+
+# Run evaluation
+results = evaluator.run_evaluation()
+
+# Print results
+print(results[['feature', 'imv', 'shapley_value']])
+
+# Visualize
+fig = evaluator.plot_shapley_values(results, figsize=(10, 6))
+fig.savefig('shapley_values.png')
 ```
-Not implemented by default; add for multi-GPU setups.
+
+### Example 2: Multiclass Classification
+
+```python
+from imv import MulticlassIMV
+from sklearn.datasets import load_iris
+import pandas as pd
+
+# Load iris dataset
+iris = load_iris()
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+df['species'] = iris.target
+
+# Initialize evaluator
+evaluator = MulticlassIMV()
+
+# Pairwise IMV matrix
+imv_matrix = evaluator.k_fold_imv_matrix(
+    data=df,
+    outcome_variable='species',
+    features=['sepal length (cm)', 'sepal width (cm)'],
+    k=5,
+    random_state=42
+)
+
+# Visualize pairwise comparisons
+fig = evaluator.visualize_imv_matrix(imv_matrix, figsize=(10, 8))
+
+# One-vs-all approach
+ova_results = evaluator.k_fold_one_vs_all(
+    data=df,
+    outcome_variable='species',
+    features=['sepal length (cm)', 'sepal width (cm)'],
+    k=5,
+    random_state=42
+)
+
+# Visualize one-vs-all
+fig2 = evaluator.plot_ova_results(ova_results, figsize=(10, 6))
+```
+
+### Example 3: Transformer Ablation Study
+
+```python
+from imv import AblationIMV
+from transformers import (
+    DistilBertForSequenceClassification,
+    AutoTokenizer,
+    get_scheduler
+)
+from torch.optim import AdamW
+from torch.utils.data import DataLoader
+
+# Initialize
+ablation = AblationIMV(random_seed=42)
+
+# Prepare data
+tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased')
+train_dl = DataLoader(train_dataset, batch_size=16)
+test_dl = DataLoader(test_dataset, batch_size=16)
+
+# Create models with different layers
+models = {}
+for n_layers in [2, 4, 6]:
+    model = DistilBertForSequenceClassification.from_pretrained(
+        'distilbert-base-uncased',
+        num_labels=2
+    )
+    if n_layers < 6:
+        model = ablation.reduce_bert_layers(model, n_layers)
+    
+    # Train
+    optimizer = AdamW(model.parameters(), lr=2e-5)
+    scheduler = get_scheduler("linear", optimizer, 
+                             num_warmup_steps=100,
+                             num_training_steps=1000)
+    
+    model = ablation.train_and_evaluate(
+        model, train_dl, test_dl,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        epochs=3
+    )
+    
+    models[f'{n_layers}-layer'] = model
+
+# Get predictions for all models
+predictions = {}
+for name, model in models.items():
+    preds = predict_with_model(model, test_dl)
+    predictions[name] = preds
+
+# Calculate IMV matrix
+imv_matrix = ablation.calculate_imv_matrix(
+    predictions,
+    y_test,
+    prob_column='prob_positive'
+)
+
+print("\nIMV Matrix (row vs column):")
+print(imv_matrix)
+```
+
+### Example 4: Direct Core Function Usage
+
+```python
+from imv import ll, get_w, calculate_imv
+import numpy as np
+
+# True labels
+y = np.array([1, 0, 1, 1, 0, 1, 0])
+
+# Baseline predictions (intercept only)
+p_basic = np.array([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+
+# Enhanced predictions (with features)
+p_enhanced = np.array([0.8, 0.2, 0.75, 0.85, 0.3, 0.9, 0.15])
+
+# Calculate likelihoods
+ll_basic = ll(y, p_basic)
+ll_enhanced = ll(y, p_enhanced)
+
+print(f"Baseline likelihood: {ll_basic:.6f}")
+print(f"Enhanced likelihood: {ll_enhanced:.6f}")
+
+# Calculate information weights
+w_basic = get_w(ll_basic)
+w_enhanced = get_w(ll_enhanced)
+
+print(f"Baseline weight: {w_basic:.6f}")
+print(f"Enhanced weight: {w_enhanced:.6f}")
+
+# Calculate IMV
+imv = calculate_imv(p_basic, p_enhanced, y)
+
+print(f"IMV: {imv:.6f} ({imv*100:.2f}% information gain)")
+```
 
 ---
 
@@ -508,194 +997,113 @@ Not implemented by default; add for multi-GPU setups.
 
 ### Computational Complexity
 
-| Module | Time Complexity | Space Complexity |
-|--------|----------------|------------------|
-| SHAP-IMV | O(2^n * k * m) | O(2^n) |
-| Multi-class IMV (One-vs-All) | O(k * n_folds * m) | O(k * n_samples) |
-| Multi-class IMV (Pairwise) | O(k² * n_folds * m) | O(k² * n_samples) |
-| Ablation IMV | O(a * e * n_samples * d) | O(model_size) |
+#### Binary IMV with Shapley Values
 
-Where:
-- n: Number of features
-- k: Number of classes
-- m: Model training time
-- a: Number of ablation variants
-- e: Training epochs
-- d: Model forward/backward pass complexity
+- **Power set enumeration**: $O(2^n)$ where n = number of features
+- **Model training per subset**: $O(n_{\text{samples}} \times n_{\text{features}})$
+- **Total**: $O(2^n \times n_{\text{samples}} \times n_{\text{features}})$
 
-### Optimization Tips
+**Practical Limits:**
+- Works well for n ≤ 10 features
+- Becomes expensive for n > 15 features
+- Consider sampling coalitions for large n
 
-#### 1. Reduce Feature Count (SHAP-IMV)
-```python
-# Feature selection before IMV
-from sklearn.feature_selection import SelectKBest, f_classif
+#### Multiclass IMV
 
-selector = SelectKBest(f_classif, k=10)
-X_selected = selector.fit_transform(X, y)
+- **Pairwise comparisons**: $O(n_{\text{classes}}^2)$
+- **K-fold CV**: $O(k \times n_{\text{samples}})$
+- **Total**: $O(k \times n_{\text{classes}}^2 \times n_{\text{samples}})$
 
-# Now run IMV on 10 features instead of 50
-```
+**Scaling:**
+- Linear in sample size
+- Quadratic in number of classes
+- Well-suited for moderate class counts (2-20)
 
-#### 2. Use Train-Test Split Instead of K-Fold
-```python
-# Faster but less stable
-evaluator = IMVEvaluator(split_method='train_test_split', prop_test=0.2)
-```
+#### Ablation IMV
 
-#### 3. Reduce Ablation Study Size
-```python
-# Instead of all layer counts, sample key points
-layer_counts = [6, 4, 2, 1]  # Full, 2/3, 1/3, minimal
-```
+- **Model training**: $O(n_{\text{epochs}} \times n_{\text{samples}} \times n_{\text{params}})$
+- **Dominated by**: Neural network training time
+- **GPU acceleration**: 10-100x speedup
 
-#### 4. Mixed Precision Training (Ablation)
-```python
-from torch.cuda.amp import autocast, GradScaler
+### Memory Requirements
 
-scaler = GradScaler()
-with autocast():
-    outputs = model(**batch)
-    loss = outputs.loss
-scaler.scale(loss).backward()
-```
-2x speedup on modern GPUs.
+- **Binary IMV**: Stores results for all coalitions: $O(2^n)$
+- **Multiclass IMV**: Stores pairwise matrix: $O(n_{\text{classes}}^2)$
+- **Ablation IMV**: Stores model parameters: $O(n_{\text{params}})$
 
-#### 5. Early Stopping
-```python
-# Stop training if validation loss plateaus
-if val_loss improvement < threshold for patience epochs:
-    break
-```
+### Optimization Strategies
 
-### Monitoring
+1. **Parallel Coalition Evaluation**: Use `joblib` or `multiprocessing`
+2. **Early Stopping**: Skip coalitions with low expected contribution
+3. **Batch Predictions**: Process multiple samples together
+4. **GPU Utilization**: For deep learning ablation studies
+5. **Caching**: Store and reuse model predictions
 
-#### Progress Tracking
-All modules use `tqdm` for progress:
-```python
-from tqdm import tqdm
-for epoch in tqdm(range(num_epochs), desc="Training"):
-    # ...
-```
+### Recommended Hardware
 
-#### Memory Profiling
-```python
-import torch
-print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
-print(f"GPU memory cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
-```
-
-#### Time Profiling
-```python
-import time
-start = time.time()
-evaluator.run_evaluation()
-print(f"Time elapsed: {time.time() - start:.2f} seconds")
-```
+- **Binary IMV (< 10 features)**: Standard CPU, 4GB RAM
+- **Binary IMV (> 10 features)**: Multi-core CPU, 8GB+ RAM
+- **Multiclass IMV**: Standard CPU, 4GB RAM
+- **Ablation IMV**: GPU (CUDA or MPS), 16GB+ RAM
 
 ---
 
-## Best Practices
+## Backward Compatibility
 
-### 1. Feature Scaling
-IMV is scale-invariant for linear models but helps with convergence:
+### Old Class Names
+
+The package maintains backward compatibility with old class names:
+
 ```python
-from sklearn.preprocessing import StandardScaler
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+# Old imports still work
+from imv import IMVEvaluator      # → BinaryIMV
+from imv import MultinomialIMV    # → MulticlassIMV
+
+# New recommended imports
+from imv import BinaryIMV
+from imv import MulticlassIMV
 ```
 
-### 2. Random Seed Management
-Always set seeds for reproducibility:
+### Migration Guide
+
+**Old Code:**
 ```python
-evaluator = IMVEvaluator(random_seed=42)
-ablator = AblationIMV(random_seed=42)
+from metrics.shap_imv import IMVEvaluator
+
+evaluator = IMVEvaluator(data, ...)
+results = evaluator.run_evaluation()
 ```
 
-### 3. Model Selection
-- **SHAP-IMV**: Works with any sklearn-compatible model
-- **Multi-class IMV**: Requires `predict_proba()` method
-- **Ablation IMV**: Designed for PyTorch models
-
-### 4. Validation Strategy
-- Use k-fold for small datasets (n < 1000)
-- Use train-test split for large datasets (n > 10,000)
-- Use stratified splits for imbalanced data
-
-### 5. Interpretation
-- IMV > 0.05: Meaningful information gain (5%+)
-- IMV < 0.01: Negligible gain
-- Negative IMV: Check for overfitting
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-#### 1. Optimization Fails to Converge
+**New Code:**
 ```python
-# Symptom: "Optimization terminated unsuccessfully"
-# Solution: Relax tolerance
-res = minimize(..., options={'gtol': 1e-06})  # Instead of 1e-09
+from imv import BinaryIMV
+
+evaluator = BinaryIMV(data, ...)
+results = evaluator.run_evaluation()
 ```
 
-#### 2. Memory Error (Ablation)
-```python
-# Symptom: CUDA out of memory
-# Solution: Reduce batch size
-train_dataloader = DataLoader(dataset, batch_size=8)  # Instead of 32
-```
-
-#### 3. Slow SHAP-IMV
-```python
-# Symptom: Takes hours for 15 features
-# Solution: Reduce features or use approximate methods
-# Option 1: Feature selection
-X_selected = select_top_k_features(X, y, k=10)
-
-# Option 2: Sample combinations (future work)
-# Not currently implemented
-```
-
-#### 4. Inconsistent Results Across Runs
-```python
-# Symptom: Different IMV values each time
-# Solution: Set random seed everywhere
-np.random.seed(42)
-random.seed(42)
-torch.manual_seed(42)
-evaluator = IMVEvaluator(random_seed=42)
-```
-
----
-
-## Future Enhancements
-
-### Planned Features
-1. **Approximate SHAP-IMV**: Monte Carlo sampling for large feature sets
-2. **GPU Acceleration**: CUDA kernels for IMV computation
-3. **Model-Agnostic Ablation**: Support for TensorFlow, JAX
-4. **Streaming IMV**: Online/incremental computation
-5. **Confidence Intervals**: Bootstrap estimation of IMV uncertainty
-
-### Extension Points
-The package is designed for extensibility:
-- Add new ablation types in `ablate_imv.py`
-- Implement custom visualization methods
-- Extend to regression tasks
-- Add probabilistic IMV variants
+All method signatures remain unchanged for seamless migration.
 
 ---
 
 ## References
 
-1. Valler, M., & Liu, J. (2024). "Information Model Vigor: A framework for feature importance."
-2. Shapley, L. S. (1953). "A value for n-person games." Contributions to the Theory of Games.
-3. Lundberg, S. M., & Lee, S. I. (2017). "A unified approach to interpreting model predictions." NIPS.
-4. Devlin, J., et al. (2018). "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding."
+1. **Shapley Values**: Shapley, L. S. (1953). "A value for n-person games"
+2. **Information Theory**: Shannon, C. E. (1948). "A Mathematical Theory of Communication"
+3. **IMV Method**: [Original paper reference]
+4. **SHAP**: Lundberg, S. M., & Lee, S. I. (2017). "A Unified Approach to Interpreting Model Predictions"
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** November 30, 2025  
-**Maintainer:** @intermodelvigorish
+## Contributing
+
+See the main README.md for contribution guidelines.
+
+## License
+
+See LICENSE file in the repository root.
+
+---
+
+*Last Updated: November 30, 2024*
+*Package Version: 1.0.0*
