@@ -1,0 +1,57 @@
+# Development Dependencies for IMV Package
+# Install with: pip install -r requirements-dev.txt
+
+# Include all base requirements
+-r requirements.txt
+
+# ============================================================================
+# TESTING
+# ============================================================================
+pytest>=7.0.0,<8.0.0              # Testing framework
+pytest-cov>=3.0.0,<5.0.0          # Code coverage
+pytest-xdist>=2.5.0,<4.0.0        # Parallel test execution
+
+# ============================================================================
+# CODE QUALITY
+# ============================================================================
+black>=22.0.0,<24.0.0             # Code formatter
+flake8>=4.0.0,<7.0.0              # Linting
+isort>=5.10.0,<6.0.0              # Import sorting
+mypy>=0.950,<2.0.0                # Static type checking
+pylint>=2.13.0,<4.0.0             # Advanced linting
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+sphinx>=4.5.0,<8.0.0              # Documentation generation
+sphinx-rtd-theme>=1.0.0,<3.0.0    # ReadTheDocs theme
+sphinx-autodoc-typehints>=1.18.0  # Type hints in docs
+nbsphinx>=0.8.0,<1.0.0            # Jupyter notebook integration
+
+# ============================================================================
+# JUPYTER & NOTEBOOKS
+# ============================================================================
+jupyter>=1.0.0                    # Jupyter notebook
+ipykernel>=6.0.0                  # IPython kernel
+ipywidgets>=7.6.0                 # Interactive widgets
+nbconvert>=6.0.0                  # Notebook conversion
+
+# ============================================================================
+# BUILD & PACKAGING
+# ============================================================================
+build>=0.7.0                      # PEP 517 build backend
+setuptools>=60.0.0                # Package setup
+wheel>=0.37.0                     # Wheel distribution
+twine>=4.0.0                      # PyPI upload
+
+# ============================================================================
+# VERSION CONTROL
+# ============================================================================
+pre-commit>=2.17.0                # Git hooks for code quality
+
+# ============================================================================
+# UTILITIES
+# ============================================================================
+ipdb>=0.13.0                      # Enhanced debugger
+memory-profiler>=0.60.0           # Memory profiling
+line-profiler>=3.5.0              # Line-by-line profiling

@@ -1,1 +1,35 @@
 SHAP_IMV_AdultIncome (2).ipynb
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated files
+*.png
+*.pdf
+models/
+saved_predictions/
+/archive
