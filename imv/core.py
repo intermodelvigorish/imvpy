@@ -9,8 +9,6 @@ Mathematical Foundation:
     2. Information weight (get_w): Converts likelihood to information weight
     3. IMV calculation: Measures relative information gain
 
-References:
-    Valler, M., & Liu, J. (2024). Information Model Vigor: A framework for feature importance.
 """
 
 import numpy as np

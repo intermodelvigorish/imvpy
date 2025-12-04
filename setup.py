@@ -26,7 +26,7 @@ def read_requirements(filename):
 setup(
     name="imv",
     version="1.0.0",
-    author="M. Valler, J. Liu",
+    author="Valler Y.",
     author_email="contact@imv-package.org",
     description="Information Model Vigor: A framework for measuring information content in machine learning models",
     long_description=long_description,

@@ -8,8 +8,6 @@ It combines information theory and game theory to provide interpretable feature 
 All core IMV computations (ll, get_w, calculate_imv) are imported from imv.core module,
 eliminating code duplication across the package.
 
-References:
-    Valler, M., & Liu, J. (2024). Information Model Vigor: A framework for feature importance.
 """
 
 import numpy as np

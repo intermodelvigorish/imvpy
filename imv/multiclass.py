@@ -9,8 +9,6 @@ three or more classes. It provides two evaluation approaches:
 All core IMV computations (ll, get_w) are imported from imv.core module,
 eliminating code duplication across the package.
 
-References:
-    Valler, M., & Liu, J. (2024). Information Model Vigor: A framework for feature importance.
 """
 
 import numpy as np
