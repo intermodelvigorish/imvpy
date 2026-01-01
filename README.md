@@ -42,26 +42,6 @@
 
 ---
 
-## Why IMV?
-
-Traditional metrics tell you **if** a model is accurate, but not **why** or **how much information** it uses:
-
-| Metric | What it Measures | Limitations |
-|--------|-----------------|-------------|
-| **Accuracy** | Correct predictions | Insensitive to confidence |
-| **F1 Score** | Precision-recall balance | Class-specific |
-| **AUC-ROC** | Ranking quality | Threshold-dependent |
-| **IMV** | **Information content** | Model-agnostic, interpretable |
-
-**Example:**
-```
-Model A: 90% accuracy, 0.15 IMV (low confidence)
-Model B: 90% accuracy, 0.45 IMV (high confidence)
-```
-Both are equally accurate, but Model B captures 3x more information!
-
----
-
 ## Installation
 
 ### Basic Installation
