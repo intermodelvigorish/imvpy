@@ -13,11 +13,19 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
-
+import warnings
+warnings.filterwarnings("ignore")
 # Add parent directory to path to import the package
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from imv import BinaryIMV, ll, get_w, calculate_imv  # Updated import for reorganized package structure
+
+# Directories for test data and figures (saved inside the tests/ folder)
+TEST_DIR = os.path.dirname(__file__)
+DATA_DIR = os.path.join(TEST_DIR, 'data')
+FIGURES_DIR = os.path.join(TEST_DIR, 'figures')
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(FIGURES_DIR, exist_ok=True)
 
 
 def load_and_prepare_adult_income_data():
@@ -25,21 +33,33 @@ def load_and_prepare_adult_income_data():
     Load and prepare the Adult Income dataset
     Replicates the data preparation from the notebook
     """
+    # Save/load processed dataset inside tests/data for reproducibility and offline runs
+    data_file = os.path.join(DATA_DIR, 'adult_income_processed.csv')
+
+    # If user has already downloaded and processed the dataset, load it
+    if os.path.exists(data_file):
+        try:
+            df_combined = pd.read_csv(data_file)
+            print(f"Loaded processed dataset from: {data_file}")
+            return df_combined
+        except Exception as e:
+            print(f"Warning: failed to read cached dataset ({data_file}): {e}")
+
     try:
         from ucimlrepo import fetch_ucirepo
-        
+
         # Fetch dataset
         print("Fetching Adult Income dataset...")
         adult = fetch_ucirepo(id=2)
-        
+
         # Get features and targets
         X = adult.data.features
         y = adult.data.targets
-        
+
         # Drop missing values
         X = X.dropna()
         print(f"Dataset shape after dropping NA: {X.shape}")
-        
+
         # Encode categorical variables
         categorical = ['workclass', 'education', 'marital-status', 'occupation',
                       'relationship', 'race', 'sex', 'native-country']
@@ -47,21 +67,28 @@ def load_and_prepare_adult_income_data():
         for col in categorical:
             if col in X.columns:
                 X[col] = label_encoder.fit_transform(X[col])
-        
+
         # Prepare target variable
         y = adult.data.targets['income']
         y = pd.Series(y, name="target")
         y = y.replace({'<=50K': 0, '<=50K.': 0, '>50K': 1, '>50K.': 1})
-        
+
         # Combine features and target
         df_combined = pd.concat([X, y], axis=1)
         df_combined = df_combined.dropna()
-        
+
         print(f"Final dataset shape: {df_combined.shape}")
         print(f"Target distribution:\n{df_combined['target'].value_counts()}")
-        
+
+        # Save processed dataset for future test runs
+        try:
+            df_combined.to_csv(data_file, index=False)
+            print(f"Saved processed dataset to: {data_file}")
+        except Exception as e:
+            print(f"Warning: could not save processed dataset to {data_file}: {e}")
+
         return df_combined
-        
+
     except ImportError:
         print("ERROR: ucimlrepo package not found. Please install it:")
         print("pip install ucimlrepo")
@@ -134,8 +161,9 @@ def test_shap_imv_basic():
     try:
         fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 4))
         plt.tight_layout()
-        plt.savefig('test_shap_imv_basic.png', dpi=150, bbox_inches='tight')
-        print("✓ Visualization saved to: test_shap_imv_basic.png")
+        out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_basic.png')
+        plt.savefig(out_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Visualization saved to: {out_path}")
         plt.close()
     except Exception as e:
         print(f"Warning: Could not create visualization: {e}")
@@ -143,7 +171,7 @@ def test_shap_imv_basic():
     print("\n✓ Basic test completed successfully!")
 
 
-def test_shap_imv_full():
+def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
     """
     Test SHAP-IMV with all variables (replicates the notebook exactly)
     This test takes longer to run
@@ -171,12 +199,12 @@ def test_shap_imv_full():
         data=df_combined,
         outcome_variable='target',
         optional_explanatory_variables=all_variables,
-        model_creator=create_logistic_regression_model,
+        model_creator=model,
         split_method='kfold',
         n_splits=10,  # Same as notebook
         prop_test=0.2,
         model_type='classification',
-        random_seed=42
+        random_seed=seed
     )
     
     # Run evaluation
@@ -203,16 +231,18 @@ def test_shap_imv_full():
         # SHAP-IMV bar plot
         fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 6))
         plt.tight_layout()
-        plt.savefig('test_shap_imv_full.png', dpi=150, bbox_inches='tight')
-        print("✓ SHAP-IMV visualization saved to: test_shap_imv_full.png")
+        out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_full.png')
+        plt.savefig(out_path, dpi=150, bbox_inches='tight')
+        print(f"✓ SHAP-IMV visualization saved to: {out_path}")
         plt.close()
-        
+
         # Single variable violin plot
         fig, ax = plt.subplots(figsize=(8, 6))
         evaluator.plot_single_var_combinations_layered_violin_centralized_zero(ax=ax)
         plt.tight_layout()
-        plt.savefig('test_single_var_violin.png', dpi=150, bbox_inches='tight')
-        print("✓ Single variable violin plot saved to: test_single_var_violin.png")
+        out_path = os.path.join(FIGURES_DIR, 'test_single_var_violin.png')
+        plt.savefig(out_path, dpi=150, bbox_inches='tight')
+        print(f"✓ Single variable violin plot saved to: {out_path}")
         plt.close()
     except Exception as e:
         print(f"Warning: Could not create visualization: {e}")

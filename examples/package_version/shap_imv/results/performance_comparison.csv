@@ -1,0 +1,4 @@
+Methods,Adult Income Accuracy,Adult Income Precision,Average Accuracy,Average Precision
+LR,79.84,68.55,79.84,68.55
+XGB,87.28,79.01,87.28,79.01
+LGBM,87.19,78.68,87.19,78.68
