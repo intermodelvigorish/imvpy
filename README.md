@@ -204,7 +204,7 @@ imv_ml_package/
 │   ├── multiclass.py           # MulticlassIMV class
 │   ├── ablation.py             # AblationIMV class
 │   └── utils.py                # Utility functions
-├── examples/                   # Example scripts
+├── paper_examples/                   # Example scripts
 │   └── package_version/
 │       ├── shap_imv/          # Binary classification examples
 │       │   ├── shap_imv_titanic.py
@@ -219,8 +219,6 @@ imv_ml_package/
 │   ├── test_ablate_imv.py
 │   ├── test_multi_imv.py
 │   └── test_shap_imv.py
-├── docs/                       # Documentation
-│   └── TECHNICAL.md
 ├── requirements.txt            # Dependencies
 ├── requirements-dev.txt        # Dev dependencies
 ├── setup.py                    # Package setup
@@ -234,7 +232,7 @@ imv_ml_package/
 | Document | Description |
 |----------|-------------|
 | **[TECHNICAL.md](docs/TECHNICAL.md)** | Technical documentation and algorithms |
-| **[Examples](examples/)** | Complete example scripts with real datasets |
+| **[Paper Examples](paper_examples/)** | Complete example scripts with real datasets to replicate paper results|
 | **[Tests README](tests/README.md)** | Testing guide and test descriptions |
 
 ---
