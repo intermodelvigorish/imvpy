@@ -141,12 +141,6 @@ pip install ucimlrepo
 - Use smaller `n_splits` (e.g., 5 instead of 10)
 - Run models sequentially instead of all at once
 
-## Citation
-
-If you use this code, please cite:
-- IMV Package: [Your citation]
-- Adult Income Dataset: Kohavi, R. (1996). UCI Machine Learning Repository
-
 ## Notes
 
 - The script automatically detects available models (LR always available, XGB/LGBM optional)
