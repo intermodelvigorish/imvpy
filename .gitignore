@@ -1,35 +1,83 @@
-SHAP_IMV_AdultIncome (2).ipynb
-
-# Python cache
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*.so
 .Python
 
-# Virtual environments
+# Build and packaging artifacts
+build/
+dist/
+sdist/
+wheels/
+*.egg-info/
+.eggs/
+
+# ---------------------------------------------------------------------------
+# Environments
+# ---------------------------------------------------------------------------
 venv/
+.venv/
 env/
 ENV/
 
-# IDE
+# ---------------------------------------------------------------------------
+# Editors and operating systems
+# ---------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
 .DS_Store
 Thumbs.db
 
-# Testing
+# Agent/editor scratch settings are developer-local.
+.claude/
+
+# ---------------------------------------------------------------------------
+# Testing, coverage and linting caches
+# ---------------------------------------------------------------------------
 .pytest_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
 
-# Generated files
-*.png
-*.pdf
+# Figures produced by the test suite are regenerated on every run.
+tests/figures/
+
+# ---------------------------------------------------------------------------
+# Local-only working directories
+# ---------------------------------------------------------------------------
+# Superseded pre-reorganisation material, kept on disk for reference only.
+/archive/
+# Internal methodology, API, audit and parity write-ups are maintained offline and
+# deliberately not published with the package.
+/documentation/
+# Reserved for a future generated documentation site.
+/docs/
+# Trained weights and ad-hoc prediction dumps are far too large to version.
 models/
 saved_predictions/
-/archive
+
+# ---------------------------------------------------------------------------
+# Generated figures
+# ---------------------------------------------------------------------------
+# Figures are byproducts everywhere except examples/**/figures, which holds the
+# curated, executed-notebook output that serves as reproduction evidence.
+*.png
+*.pdf
+!examples/**/figures/*.png
+!examples/**/figures/*.pdf
+
+# ---------------------------------------------------------------------------
+# Cached result objects
+# ---------------------------------------------------------------------------
+# Pickles from earlier runs, superseded by the executed notebooks. No notebook
+# loads them (enforced by tests/test_repository_contract.py), and shipping
+# pickles invites unsafe deserialisation, so they stay local.
+examples/**/results/*.pkl

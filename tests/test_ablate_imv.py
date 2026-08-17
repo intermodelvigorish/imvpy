@@ -8,9 +8,15 @@ NOTE: This test requires PyTorch and transformers library.
 
 import warnings
 warnings.filterwarnings("ignore")
+import pytest
 
 import sys
 import os
+
+# Figures belong beside the tests, never in whatever directory pytest was
+# launched from.
+FIGURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figures')
+os.makedirs(FIGURES_DIR, exist_ok=True)
 import re
 import numpy as np
 import pandas as pd
@@ -38,6 +44,12 @@ except ImportError as e:
     DEPENDENCIES_AVAILABLE = False
 
 from imv import AblationIMV  # Updated import for reorganized package structure
+
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.deep_learning,
+    pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="deep-learning extras not installed"),
+]
 
 
 def check_dependencies():
@@ -311,7 +323,7 @@ def test_imv_matrix_calculation():
                    center=0, ax=ax)
         ax.set_title('Ablation IMV Matrix\n(row model vs column model)')
         plt.tight_layout()
-        plt.savefig('test_ablation_imv_matrix.png', dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(FIGURES_DIR, 'test_ablation_imv_matrix.png'), dpi=150, bbox_inches='tight')
         print("✓ Heatmap saved to: test_ablation_imv_matrix.png")
         plt.close()
     except Exception as e:

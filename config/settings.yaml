@@ -1,0 +1,128 @@
+# IMV 1.2.0 settings reference.
+# This file documents package defaults and reproducibility profiles. The current
+# API does not automatically load this file; pass values explicitly in Python.
+
+schema_version: 1
+package_version: "1.2.0"
+
+defaults:
+  core_imv:
+    epsilon: 1.0e-9  # probabilities are clipped into [epsilon, 1-epsilon]
+    inverse:
+      # Root of g(w) = w*log(w) + (1-w)*log(1-w) = log(a), taking the w >= 1/2
+      # branch as the paper specifies.
+      method: brentq            # or "lbfgsb" to reproduce legacy published numbers
+      bounds:
+        # Stops 1e-12 short of 1 only to keep (1-w)*log(1-w) finite. The former
+        # 0.999 cap pinned every likelihood above 0.9921 to one weight.
+        - [0.5, 0.999999999999]
+      # initial_guess/ftol/tolerance_gtol apply to the "lbfgsb" method only.
+      initial_guess: 0.5
+      ftol: 0.0
+      tolerance_gtol: 1.0e-9
+      # Likelihoods below 0.5 have no root at all. Within this many nats of the
+      # floor the boundary value 0.5 is returned; beyond it the weight is NaN.
+      chance_tolerance_nats: 0.5
+
+  shap_imv:
+    split_method: kfold
+    n_splits: 5
+    prop_test: 0.2
+    model_type: classification
+    all_combinations_imv: null
+    random_seed: 42
+    n_jobs: 1
+    verbose: false
+    positive_probability_column_index: 1
+    shapley_output_decimals: 3
+    coalition_mode: exact_power_set
+
+  multi_imv:
+    n_splits: 10
+    optional_explanatory_variables: null  # all columns except outcome
+    random_state: null
+    stratified: false
+    verbose: false
+    class_order: sorted
+    pairwise_probability_normalization: true
+
+  ablation_imv:
+    random_seed: 42
+    device_priority: [cuda, mps, cpu]
+    training:
+      num_epochs: 3
+      learning_rate: 2.0e-5
+      optimizer_class: null  # torch.optim.Adam
+      scheduler_fn: null
+      seed: null  # use random_seed
+      verbose: true
+      label_batch_key: labels
+      metric_average: binary
+    prediction_columns:
+      target: "True Label"
+      positive_probability: "Positive Probability"
+      negative_probability: "Negative Probability"
+      predicted_label: "Predicted Label"
+    matrix:
+      row_role: enhanced
+      column_role: basic
+      directional: true
+
+  plotting:
+    heatmap:
+      figsize: [6, 6]
+      title: "IMV matrix"
+      colormap: coolwarm
+      number_format: ".3f"
+    one_vs_rest_boxplot:
+      figsize: [6, 6]
+      title: "One-vs-rest IMV across folds"
+    binary_shap_barplot:
+      figsize: [12, 4]
+    binary_single_variable_violin:
+      figsize: [6, 4]
+
+profiles:
+  paper_parity:
+    description: Preserve original-script splitting and metric transformation.
+    core_imv:
+      epsilon: 1.0e-9
+      tolerance_gtol: 1.0e-9
+    shap_imv:
+      split_method: kfold
+      n_splits: 10
+      random_seed: 42
+      n_jobs: 1
+    multi_imv:
+      n_splits: 10
+      stratified: false
+      random_state: 42
+    ablation_imv:
+      legacy_notebook_optimizer_tolerance_gtol: 1.0e-20
+      legacy_symmetric_display: true
+      truthful_directional_output: true
+
+  recommended_production:
+    description: Starting profile for ordinary i.i.d. classification; adapt for groups or time.
+    core_imv:
+      epsilon: 1.0e-9
+      tolerance_gtol: 1.0e-9
+    shap_imv:
+      split_method: stratified_kfold
+      n_splits: 5
+      random_seed: 42
+      n_jobs: 1
+      exact_feature_limit_guidance: 12
+    multi_imv:
+      n_splits: 5
+      stratified: true
+      random_state: 42
+    ablation_imv:
+      repeated_seeds: [42, 43, 44, 45, 46]
+      directional_matrix: true
+      aligned_test_rows_required: true
+
+paper_example_seeds:
+  shap_titanic: [42, 123, 456]
+  multi_nursery: [42, 43, 44]
+  ablation: [42, 43, 44, 45, 46]

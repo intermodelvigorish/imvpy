@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imv"
+version = "1.2.0"
+description = "Information Model Vigor for model comparison and feature attribution"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [{name = "Valler Y."}]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.23",
+  "pandas>=1.5,<3",
+  "scipy>=1.9,<2",
+  "scikit-learn>=1.2,<2",
+  "matplotlib>=3.6,<4",
+  # 0.13 is the floor for the hue=/legend= plotting API used in shap_imv.
+  "seaborn>=0.13,<1",
+  "joblib>=1.2,<2",
+  "tqdm>=4.64,<5",
+]
+
+[project.optional-dependencies]
+progress = ["tqdm-joblib>=0.0.4"]
+deep-learning = ["torch>=2"]
+notebooks = ["jupyter>=1", "nbclient>=0.8", "nbformat>=5.8"]
+test = ["pytest>=7", "pytest-cov>=4", "pyyaml>=6"]
+dev = [
+  "imv[progress,notebooks,test]",
+  "build>=1",
+  "ruff>=0.5",
+  "mypy>=1.8",
+]
+
+[project.urls]
+Repository = "https://github.com/intermodelvigorish/imv_ml_package"
+Issues = "https://github.com/intermodelvigorish/imv_ml_package/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra -m 'not slow and not network and not deep_learning'"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "slow: research-scale or long-running test",
+  "network: test requiring network access",
+  "deep_learning: test requiring optional deep-learning dependencies",
+]
+
+[tool.coverage.run]
+source = ["src/imv"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 55

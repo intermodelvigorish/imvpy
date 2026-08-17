@@ -5,9 +5,17 @@ Replicates the Nursery dataset example from Multi_IMV_Nursery.ipynb
 
 import warnings
 warnings.filterwarnings("ignore")
+import pytest
+
+pytestmark = pytest.mark.slow
 
 import sys
 import os
+
+# Figures belong beside the tests, never in whatever directory pytest was
+# launched from.
+FIGURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figures')
+os.makedirs(FIGURES_DIR, exist_ok=True)
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -101,7 +109,9 @@ def create_logistic_regression_model():
     """
     Create a logistic regression model for multi-class classification
     """
-    return LogisticRegression(max_iter=500, random_state=42, multi_class='multinomial')
+    # multi_class= was removed in scikit-learn 1.7; lbfgs is multinomial by
+    # default for multiclass targets, matching the note in nursery_seed42_parity.json.
+    return LogisticRegression(max_iter=500, random_state=42, solver='lbfgs')
 
 
 def test_multi_imv_one_vs_all():
@@ -151,7 +161,7 @@ def test_multi_imv_one_vs_all():
     try:
         fig, ax = evaluator.multinomial_IMV_boxplot(imv_results, figsize=(8, 6))
         plt.tight_layout()
-        plt.savefig('test_multi_imv_boxplot.png', dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(FIGURES_DIR, 'test_multi_imv_boxplot.png'), dpi=150, bbox_inches='tight')
         print("✓ Boxplot saved to: test_multi_imv_boxplot.png")
         plt.close()
     except Exception as e:
@@ -205,7 +215,7 @@ def test_multi_imv_confusion_matrix():
     try:
         fig, ax = evaluator.multinomial_IMV_heatmap(imv_matrix_average, figsize=(8, 8))
         plt.tight_layout()
-        plt.savefig('test_multi_imv_heatmap.png', dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(FIGURES_DIR, 'test_multi_imv_heatmap.png'), dpi=150, bbox_inches='tight')
         print("✓ Heatmap saved to: test_multi_imv_heatmap.png")
         plt.close()
     except Exception as e:

@@ -5,6 +5,9 @@ Replicates the Adult Income dataset example from SHAP_IMV_AdultIncome (2).ipynb
 
 import warnings
 warnings.filterwarnings("ignore")
+import pytest
+
+pytestmark = pytest.mark.slow
 
 import sys
 import os
