@@ -37,7 +37,10 @@ dependencies = [
 progress = ["tqdm-joblib>=0.0.4"]
 deep-learning = ["torch>=2"]
 notebooks = ["jupyter>=1", "nbclient>=0.8", "nbformat>=5.8"]
-test = ["pytest>=7", "pytest-cov>=4", "pyyaml>=6"]
+# nbformat belongs here, not only in `notebooks`: the repository-contract tests
+# read the example notebooks, so `pip install .[test]` must be sufficient to run
+# the whole suite on its own.
+test = ["pytest>=7", "pytest-cov>=4", "pyyaml>=6", "nbformat>=5.8"]
 dev = [
   "imv[progress,notebooks,test]",
   "build>=1",
