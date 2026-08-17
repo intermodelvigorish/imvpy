@@ -63,6 +63,20 @@ def test_probability_columns_follow_classes_not_fold_membership():
     assert (ova.loc[1:, "imv"] > 0).all()
 
 
+def test_pairwise_matrix_is_exactly_symmetric():
+    """ll() is invariant under (y, p) -> (1-y, 1-p), and pairwise renormalisation
+    makes p_j = 1 - p_i, so swapping the pair changes nothing. Unlike the ablation
+    matrix, this one carries no directional information."""
+    rng = np.random.RandomState(11)
+    labels = np.repeat([0, 1, 2, 3], 20)
+    data = pd.DataFrame({"x": rng.normal(labels, 0.8), "target": labels})
+    probs = rng.dirichlet(np.ones(4), size=len(labels))
+    enhanced = rng.dirichlet(np.ones(4) * 2, size=len(labels))
+    ev = MulticlassIMV(data, "target", creator, n_splits=2)
+    matrix = ev.multinominal_imv_matrix(data, "target", probs, enhanced, classes=[0, 1, 2, 3])
+    assert np.nanmax(np.abs(matrix.values - matrix.values.T)) < 1e-12
+
+
 def test_mismatched_column_count_reports_actionable_error():
     data = pd.DataFrame({"x": range(4), "target": [1, 1, 2, 2]})
     probs = np.tile([0.5, 0.3, 0.2], (4, 1))

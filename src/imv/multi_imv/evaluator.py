@@ -173,7 +173,11 @@ class MulticlassIMV:
         Interpretation:
             - High IMV(i,j): Features help distinguish class i from class j
             - Low IMV(i,j): Little information gain for this class pair
-            - Matrix is generally asymmetric: IMV(i,j) ≠ IMV(j,i)
+            - Matrix is exactly symmetric: IMV(i,j) == IMV(j,i). Pairwise
+              renormalization gives p_j = 1 - p_i, and swapping i and j also
+              flips the label, so ll() is unchanged because it is invariant
+              under (y, p) -> (1-y, 1-p). This is unlike the ablation matrix,
+              where the two models have independent likelihoods.
         """
         outcomes, p_base, p_enhanced = self._resolve_classes(
             data, outcome_variable, p_base, p_enhanced, classes
@@ -381,7 +385,7 @@ class MulticlassIMV:
             
         Note:
             - Diagonal elements are always 0 (no self-discrimination)
-            - Matrix is generally asymmetric
+            - Matrix is exactly symmetric (see multinominal_imv_matrix)
             - Uses random_state for reproducible splits
         """
         imv_matrices_list = []
