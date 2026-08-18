@@ -1,4 +1,4 @@
-# IMV: Information Model Vigorish
+# IMV: Information Model Vigorishish
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 ## Overview
 
-**IMV (Information Model Vigor)** is a model-agnostic framework for quantifying how much information a model captures about its predictions. Unlike traditional metrics that focus on accuracy or error rates, IMV measures the **information content** using principles from information theory and game theory.
+**IMV (Information Model Vigorish)** is a model-agnostic framework for quantifying how much information a model captures about its predictions. Unlike traditional metrics that focus on accuracy or error rates, IMV measures the **information content** using principles from information theory and game theory.
 
 ### Key Features
 
@@ -47,7 +47,7 @@ Requires Python 3.9 or newer.
 ### Basic installation
 
 ```bash
-git clone https://github.com/intermodelvigorish/imv_ml_package.git
+git clone https://github.com/intermodel/vigorish/imv_ml_package.git
 cd imv_ml_package
 pip install .
 ```
@@ -474,6 +474,6 @@ pip install -r requirements.txt
 
 <div align="center">
 
-[Back to Top](#imv-information-model-vigor)
+[Back to Top](#imv-information-model-Vigorish)
 
 </div>
