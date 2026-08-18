@@ -1,4 +1,4 @@
-# IMV: Information Model Vigor
+# IMV: Information Model Vigorish
 
 <div align="center">
 
