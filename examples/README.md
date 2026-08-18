@@ -70,8 +70,9 @@ maintainers' documentation.
 - A negative SHAP-IMV value means the feature **reduced** held-out information
   (overfitting or calibration damage). It does **not** indicate the negative class.
   SHAP-IMV is a global metric attribution and does not use the `shap` library.
-- The multiclass pairwise matrix is **symmetric by construction**; the ablation
-  matrix **is** directional, with a different baseline in each column.
+- IMV comparisons are **directional**: the baseline and enhanced predictions
+  have distinct roles, so reversing them can change the result. This applies to
+  the binary, multiclass, and ablation extensions.
 - A likelihood below 0.5 has no equivalent coin: `get_w` returns `NaN` and
   `information_deficit` reports the shortfall in nats. Treat it as evidence of
   miscalibration, not of weak discrimination.

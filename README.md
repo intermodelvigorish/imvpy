@@ -1,8 +1,8 @@
-# IMV: Information Model Vigorish
+# IMV: InterModel Vigorish
 
 <div align="center">
 
-*A unified framework for measuring information content and feature importance in machine learning models*
+*A Python implementation of the InterModel Vigorish for comparing probabilistic predictions*
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -14,13 +14,15 @@
 
 ## Overview
 
-**IMV (Information Model Vigorish)** is a model-agnostic framework for quantifying how much information a model captures about its predictions. Unlike traditional metrics that focus on accuracy or error rates, IMV measures the **information content** using principles from information theory and game theory.
+**IMV (InterModel Vigorish)** is a model-agnostic metric for quantifying the change in predictive accuracy between a baseline and an enhanced probabilistic prediction system. It translates each system’s mean log-likelihood into the equivalent weight of a weighted coin, then expresses the enhanced system’s advantage as the house edge—or “vigorish”—of a fair bet priced from the baseline system.
+
+The canonical method is defined for binary outcomes and probability predictions. IMV is always relative to a baseline (which may be prevalence alone), is directional, and is intended to be evaluated on held-out or out-of-sample predictions. It is not mutual information, entropy, accuracy, or a calibrated probability.
 
 ### Key Features
 
 **Three Powerful Modules:**
-- **Binary IMV**: Binary classification with SHAP value attribution
-- **Multi-class IMV**: Multi-class problems (3+ classes) with confusion matrix analysis
+- **Binary IMV**: Binary classification with exact IMV-Shapley feature attribution
+- **Multi-class IMV**: An extension using one-vs-rest and pairwise comparisons
 - **Ablation IMV**: Deep learning ablation studies with GPU support
 
 **Performance:**
@@ -47,7 +49,7 @@ Requires Python 3.9 or newer.
 ### Basic installation
 
 ```bash
-git clone https://github.com/intermodel/vigorish/imv_ml_package.git
+git clone https://github.com/intermodelvigorish/imv_ml_package.git
 cd imv_ml_package
 pip install .
 ```
@@ -273,25 +275,34 @@ not distributed with the package. Contact the authors if you need them for revie
 - Report the split method, seed, baseline model, estimator, calibration procedure
   and package version with any IMV result.
 
+### Citation
+
+This package is based on:
+
+Domingue BW, Rahal C, Faul J, Freese J, Kanopka K, Rigos A, et al. (2025).
+“The InterModel Vigorish (IMV) as a flexible and portable approach for
+quantifying predictive accuracy with binary outcomes.” *PLOS ONE*, 20(3),
+e0316491. [https://doi.org/10.1371/journal.pone.0316491](https://doi.org/10.1371/journal.pone.0316491)
+
 ---
 
-## Examples to replicate the paper results
+## Example analyses
 
 ### Binary Classification Examples
 
 The `examples/shap_imv/` directory contains:
 
-1. **Titanic Dataset** (`shap_imv_titanic.py`)
+1. **Titanic Dataset** (`shap_imv_titanic.ipynb`)
    - Binary survival prediction
    - 7 features: Class, Sex, Age, Age×Class, Alone, Fare, Embarked
    - Models: Logistic Regression, XGBoost, LightGBM
 
-2. **Breast Cancer Dataset** (`shap_imv_breastcancer.py`)
+2. **Breast Cancer Dataset** (`shap_imv_breast_cancer.ipynb`)
    - Binary diagnosis (malignant/benign)
    - 9 tumor characteristics
    - Models: Logistic Regression, XGBoost, LightGBM
 
-3. **Wine Quality Dataset** (`shap_imv_winequality.py`)
+3. **Wine Quality Dataset** (`shap_imv_wine_quality.ipynb`)
    - Binary quality classification (high/low)
    - 11 chemical properties
    - Models: Logistic Regression, XGBoost, LightGBM
@@ -300,47 +311,33 @@ The `examples/shap_imv/` directory contains:
 
 The `examples/multi_imv/` directory contains:
 
-1. **Nursery Dataset** (`multi_imv_nursery.py`)
+1. **Nursery Dataset** (`multi_imv_nursery.ipynb`)
    - 3 classes: Not recommend, Priority, Special priority
    - 8 categorical features
    - Models: Logistic Regression, XGBoost, LightGBM
 
-2. **Car Evaluation Dataset** (`multi_imv_car_evaluation.py`)
+2. **Car Evaluation Dataset** (`multi_imv_car_evaluation.ipynb`)
    - 4 classes: Unacceptable, Acceptable, Good, Very good
    - 6 categorical features
    - Models: Logistic Regression, XGBoost, LightGBM
 
-3. **Dry Bean Dataset** (`multi_imv_dry_bean.py`)
+3. **Dry Bean Dataset** (`multi_imv_dry_bean.ipynb`)
    - 7 bean varieties
    - 16 continuous structural features
    - Models: Logistic Regression, XGBoost, LightGBM
 
-4. **Combined Figure** (`create_combined_figure.py`)
-   - Generates publication-quality combined visualization
-   - Side-by-side IMV confusion matrices for all three datasets
+The generated figures and CSV results for these notebooks are included beside
+the notebooks where available.
 
 ### Running Examples
 
 ```bash
-# Binary classification examples
-cd examples/package_version/shap_imv
-python shap_imv_titanic.py
-python shap_imv_breastcancer.py
-python shap_imv_winequality.py
-
-# Multi-class examples
-cd ../multi_imv
-python multi_imv_nursery.py
-python multi_imv_car_evaluation.py
-python multi_imv_dry_bean.py
-
-# Generate combined figure
-python create_combined_figure.py
+# Launch the notebooks from the repository root
+jupyter lab examples/
 ```
 
-All scripts support caching:
-- `--force`: Ignore cache and re-run analysis
-- `--clear-cache`: Delete all cached results
+The notebooks cache downloaded data outside the working tree and write their
+results and figures beside the notebook.
 
 ---
 
@@ -474,6 +471,6 @@ pip install -r requirements.txt
 
 <div align="center">
 
-[Back to Top](#imv-information-model-Vigorish)
+[Back to Top](#imv-intermodel-vigorish)
 
 </div>

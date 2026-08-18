@@ -1,7 +1,7 @@
 """
-SHAP-IMV: Shapley-based Information Model Vigor for Binary Classification
+SHAP-IMV: Shapley-based InterModel Vigorish for Binary Classification
 
-This module implements the SHAP-IMV (Shapley Additive Explanations - Information Model Vigor)
+This module implements SHAP-IMV (Shapley-based InterModel Vigorish)
 framework for evaluating feature importance in binary classification models.
 It combines information theory and game theory to provide interpretable feature attributions.
 
@@ -47,7 +47,7 @@ class IncompleteCoalitionWarning(UserWarning):
 
 class BinaryIMV:
     """
-    Evaluator for computing Information Model Vigor (IMV) and SHAP-IMV values for binary classification.
+    Evaluator for computing InterModel Vigorish (IMV) and SHAP-IMV values for binary classification.
     
     This class implements the IMV framework which measures the information gain
     from adding features to a model. It supports binary classification with

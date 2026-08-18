@@ -1,5 +1,5 @@
 """
-IMV Core: Shared Information Model Vigor Functions
+IMV Core: Shared InterModel Vigorish Functions
 
 This module contains the core mathematical functions used across all IMV variants.
 All IMV computations (binary, multi-class, ablation) share these base functions.
@@ -361,7 +361,7 @@ def get_w(a, guess=0.5, bounds=[(CHANCE_FLOOR, DEFAULT_UPPER_BOUND)], tolerance=
 def calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9, tolerance=1e-09,
                   method=DEFAULT_INVERSE_METHOD):
     """
-    Calculate Information Model Vigor (IMV) score.
+    Calculate the InterModel Vigorish (IMV) score.
     
     Computes the package's relative transformed-likelihood score when comparing
     an enhanced model against a basic model. It is a bespoke ratio, not a

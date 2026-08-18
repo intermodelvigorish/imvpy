@@ -1,5 +1,5 @@
 """
-Ablation IMV: Information Model Vigor for Deep Learning Ablation Studies
+Ablation IMV: InterModel Vigorish for Deep Learning Ablation Studies
 
 This module applies IMV to deep learning models, specifically transformers,
 to quantify the information contribution of architectural components through

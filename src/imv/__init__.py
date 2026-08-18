@@ -1,8 +1,8 @@
 """
-IMV (Information Model Vigor) Package
+IMV (InterModel Vigorish) Package
 
-A comprehensive Python package for measuring information gain in machine learning
-models using Information Model Vigor (IMV) metrics. Supports binary classification,
+A Python package for computing InterModel Vigorish in machine learning
+models using InterModel Vigorish (IMV) metrics. Supports binary classification,
 multi-class classification, and deep learning ablation studies.
 
 Key Components:

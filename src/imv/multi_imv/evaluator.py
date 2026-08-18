@@ -1,5 +1,5 @@
 """
-Multi-class IMV: Information Model Vigor for Multi-class Classification
+Multi-class IMV: InterModel Vigorish for Multi-class Classification
 
 This module extends the IMV framework to handle classification problems with
 three or more classes. It provides two evaluation approaches:
