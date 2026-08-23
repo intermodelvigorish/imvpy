@@ -194,7 +194,7 @@ def minimize_me(p, a):
     return abs((p * np.log(p)) + ((1 - p) * np.log(1 - p)) - np.log(a))
 
 
-def get_w(a, guess=0.5, bounds=[(CHANCE_FLOOR, DEFAULT_UPPER_BOUND)], tolerance=1e-09,
+def get_w(a, guess=0.5, bounds=[(CHANCE_FLOOR, DEFAULT_UPPER_BOUND)], tolerance=1e-09,  # noqa: B006
           chance_tolerance_nats=DEFAULT_CHANCE_TOLERANCE_NATS,
           method=DEFAULT_INVERSE_METHOD):
     """

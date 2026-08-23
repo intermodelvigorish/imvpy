@@ -9,7 +9,6 @@ import yaml
 from imv import AblationIMV, BinaryIMV, MulticlassIMV
 from imv.utils.core import calculate_imv, get_w, ll
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SETTINGS = yaml.safe_load((ROOT / "config/settings.yaml").read_text())
 

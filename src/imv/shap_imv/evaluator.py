@@ -11,19 +11,20 @@ eliminating code duplication across the package.
 """
 
 import warnings
-from math import factorial
 from itertools import combinations
+from math import factorial
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
-from joblib import Parallel, delayed
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 import seaborn as sns
+from joblib import Parallel, delayed
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+from tqdm import tqdm
 
-# Import shared IMV core functions
-from ..utils.core import ll, get_w, calculate_imv
+# Import shared IMV core functions. `ll` and `get_w` are re-exported rather than
+# used here: notebook-era code imports them from this module.
+from ..utils.core import calculate_imv, get_w, ll  # noqa: F401
 
 # Try to import tqdm_joblib, if not available, create a simple context manager
 try:
@@ -109,7 +110,8 @@ class BinaryIMV:
             raise ValueError("only binary classification is methodologically supported")
         if data[outcome_variable].isna().any() or data[list(optional_explanatory_variables)].isna().any().any():
             raise ValueError("data contains missing values; impute or remove them first")
-        if set(pd.unique(data[outcome_variable])) - {0, 1, False, True}:
+        # 0/False and 1/True are equal but both spellings are listed for the reader.
+        if set(pd.unique(data[outcome_variable])) - {0, 1, False, True}:  # noqa: B033
             raise ValueError("binary classification outcome must contain only 0 and 1")
         self.data = data.copy()
         self.outcome_variable = outcome_variable
@@ -319,7 +321,6 @@ class BinaryIMV:
                     data.append({'Variable': ', '.join(combination), 'IMV Score': score})
             df = pd.DataFrame(data)
 
-            max_abs_value = df['IMV Score'].abs().max()
             if ax is None:
                 fig, ax = plt.subplots(figsize=figsize)
                 created_ax = True

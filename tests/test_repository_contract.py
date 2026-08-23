@@ -8,7 +8,6 @@ from scipy.optimize import brentq
 
 from imv import calculate_imv
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

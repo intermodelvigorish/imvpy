@@ -21,6 +21,9 @@ Example Usage:
     >>> results = evaluator.run_evaluation()
 """
 
+from .ablation_imv import AblationIMV
+from .multi_imv import MulticlassIMV, MultinomialIMV
+from .shap_imv import BinaryIMV, IMVEvaluator, IncompleteCoalitionWarning
 from .utils.core import (
     BelowChanceLikelihoodWarning,
     calculate_imv,
@@ -29,10 +32,6 @@ from .utils.core import (
     information_deficit,
     ll,
 )
-from .shap_imv import BinaryIMV, IMVEvaluator, IncompleteCoalitionWarning
-from .multi_imv import MulticlassIMV, MultinomialIMV
-
-from .ablation_imv import AblationIMV
 
 __version__ = "1.2.0"
 

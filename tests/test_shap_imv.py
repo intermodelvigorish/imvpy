@@ -4,24 +4,32 @@ Replicates the Adult Income dataset example from SHAP_IMV_AdultIncome (2).ipynb
 """
 
 import warnings
+
 warnings.filterwarnings("ignore")
 import pytest
 
 pytestmark = pytest.mark.slow
 
-import sys
 import os
+import sys
+import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
-import matplotlib.pyplot as plt
-import warnings
+
 warnings.filterwarnings("ignore")
 # Add parent directory to path to import the package
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from imv import BinaryIMV, ll, get_w, calculate_imv  # Updated import for reorganized package structure
+from imv import (  # Updated import for reorganized package structure
+    BinaryIMV,
+    calculate_imv,
+    get_w,
+    ll,
+)
 
 # Directories for test data and figures (saved inside the tests/ folder)
 TEST_DIR = os.path.dirname(__file__)

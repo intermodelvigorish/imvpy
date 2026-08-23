@@ -33,9 +33,8 @@ no shared helper modules, so it can be read and run in isolation.
 ## Running them
 
 ```bash
-pip install -e ".[dev]"                       # package + jupyter + test extras
-pip install ucimlrepo                         # UCI downloads
-pip install transformers datasets             # ablation only
+pip install -e ".[examples]"                  # package + jupyter + UCI/XGBoost/LightGBM
+pip install -e ".[examples-deep-learning]"    # adds torch/transformers/datasets
 jupyter lab
 ```
 
@@ -54,6 +53,37 @@ They are **not** replications of the published figures. Only Adult Income, Nurse
 and IMDb have generating code in the original research notebooks; the remaining
 datasets appear nowhere in them. Provenance is recorded per dataset in the
 maintainers' documentation.
+
+## What each notebook does to its data
+
+Every notebook prints its raw shape and class distribution before cleaning, and
+its cleaned shape after, so the preprocessing is auditable from the stored
+outputs without re-running anything.
+
+| Notebook | Target construction | Notable feature handling |
+|---|---|---|
+| Adult Income | `income == ">50K"`, after stripping the trailing `.` UCI's test file adds | 4 supplied numerics + `sex_female` and `married` derived |
+| Titanic | `survived` | `Age`/`Fare` median-imputed; `AgeClass` interaction; `Title` from the name field |
+| Breast Cancer | diagnosis `== "M"` | 6 of 30 columns (the least collinear "mean" measurements) |
+| Wine Quality | `quality >= 6` — a stated choice, not a property of the data | 6 of 11 chemical properties; red and white pooled |
+| Nursery | 3 of 5 classes; `recommend` (2 rows) and `very_recom` (328) dropped | all 8 categoricals → integer codes |
+| Car Evaluation | 4 classes in explicit order `unacc < acc < good < vgood` | all 6 categoricals → integer codes |
+| Dry Bean | 7 classes, alphabetical (no natural order) | all 16 numerics standardised |
+| IMDb | supplied `label` | class-balanced 5,000/5,000 subsample, truncated to 256 tokens |
+
+Two example-grade shortcuts apply and are not recommendations:
+
+- **Imputation and scaling are fitted before splitting**, so each held-out fold is
+  scored by a model whose preprocessing saw it. The leak is aggregate statistics
+  only, but it runs in the optimistic direction. A strict analysis passes a
+  scikit-learn `Pipeline` as `model_creator` so preprocessing refits per fold.
+- **Nursery and Car Evaluation encode ordinal features alphabetically**
+  (`pd.Categorical(...).codes`), so `safety: low < med < high` becomes
+  `1, 2, 0`. This costs logistic regression real signal; the tree models are
+  largely unaffected.
+
+The maintainers' documentation carries the full comparative treatment, including
+exact row counts and the reasoning behind each choice.
 
 ## Conventions
 

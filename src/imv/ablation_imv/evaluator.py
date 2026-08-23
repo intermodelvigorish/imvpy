@@ -11,11 +11,13 @@ ablation studies. Common ablations include:
 Supports automatic GPU detection: CUDA (NVIDIA) > MPS (Apple Silicon) > CPU
 """
 
+import random
+
 import numpy as np
 import pandas as pd
-import random
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from tqdm.auto import tqdm
+
 torch = None
 
 
@@ -32,14 +34,12 @@ def _require_torch():
         torch = torch_module
     return torch
 
-# Import shared IMV functions from core module
-from ..utils.core import ll, get_w, calculate_imv
+# Import shared IMV functions from core module. Placed after the lazy-torch helper
+# so that helper stays at the top of the file where readers look for it.
+from ..utils.core import calculate_imv, get_w, ll  # noqa: E402,F401
 
 
 class AblationIMV:
-    ll = staticmethod(ll)
-    get_w = staticmethod(get_w)
-    calculate_imv = staticmethod(calculate_imv)
     """
     Ablation IMV for deep learning models (especially NLP transformers).
     
@@ -53,8 +53,22 @@ class AblationIMV:
     ----------
     random_seed : int, default=42
         Random seed for reproducibility
+
+    Notes
+    -----
+    Only the constructor and :meth:`train_and_evaluate` need PyTorch. The static
+    methods :meth:`calculate_imv_matrix` and :meth:`average_imv_matrices` score
+    saved prediction frames and work without the ``deep-learning`` extra.
     """
-    
+
+    # Notebook-era compatibility while retaining one canonical implementation.
+    # These must stay below the docstring: a class body statement placed above a
+    # string literal turns that literal into a no-op expression, leaving
+    # ``AblationIMV.__doc__`` as None.
+    ll = staticmethod(ll)
+    get_w = staticmethod(get_w)
+    calculate_imv = staticmethod(calculate_imv)
+
     def __init__(self, random_seed=42):
         _require_torch()
         self.random_seed = random_seed
@@ -62,11 +76,11 @@ class AblationIMV:
         # Automatic device detection: CUDA > MPS > CPU
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
-            print(f"Using device: CUDA GPU")
+            print("Using device: CUDA GPU")
             print(f"GPU: {torch.cuda.get_device_name(0)}")
         elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
             self.device = torch.device("mps")
-            print(f"Using device: Apple Silicon GPU (MPS)")
+            print("Using device: Apple Silicon GPU (MPS)")
             print("Note: MPS provides GPU acceleration on M1/M2/M3 Macs")
         else:
             self.device = torch.device("cpu")
@@ -335,11 +349,16 @@ class AblationIMV:
             ...     'Baseline': df_baseline
             ... }
             >>> imv_matrix = AblationIMV.calculate_imv_matrix(predictions)
-            >>> print(imv_matrix)
+            >>> print(imv_matrix.round(3))
             #                   Full  Ablated-Layer  Baseline
-            # Full             0.000          0.045     0.120
-            # Ablated-Layer   -0.045          0.000     0.068
-            # Baseline        -0.120         -0.068     0.000
+            # Full           0.000          0.049     0.183
+            # Ablated-Layer -0.047          0.000     0.127
+            # Baseline      -0.154         -0.113     0.000
+
+            Note that (Full, Baseline) = 0.183 while (Baseline, Full) = -0.154:
+            the two cells divide by different baseline weights, so they are not
+            negatives of each other. Read down a column only after checking that
+            the column's baseline is the one you meant.
         """
         model_names = list(predictions_dict.keys())
         if not model_names:

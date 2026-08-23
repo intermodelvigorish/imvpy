@@ -13,14 +13,14 @@ eliminating code duplication across the package.
 
 import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold, StratifiedKFold
-import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import KFold, StratifiedKFold
 
 # Import shared IMV core functions
-from ..utils.core import ll, get_w
+from ..utils.core import get_w, ll
 
 
 def _nanmean(values, axis):
@@ -31,9 +31,6 @@ def _nanmean(values, axis):
 
 
 class MulticlassIMV:
-    # Notebook-era compatibility while retaining one canonical implementation.
-    ll = staticmethod(ll)
-    get_w = staticmethod(get_w)
     """
     Multinomial IMV for multi-class classification problems.
     
@@ -54,8 +51,22 @@ class MulticlassIMV:
         List of feature column names. If None, uses all columns except outcome
     random_state : int, optional
         Random seed for reproducibility
+    stratified : bool, default=False
+        False reproduces the original notebooks' shuffled ``KFold``. True selects
+        ``StratifiedKFold``, which is the right choice for a new analysis on
+        imbalanced classes and guarantees no fold omits a class. Switching
+        changes the result and must be reported.
+    verbose : bool, default=False
+        Print per-fold progress and results.
     """
-    
+
+    # Notebook-era compatibility while retaining one canonical implementation.
+    # These must stay below the docstring: a class body statement placed above a
+    # string literal turns that literal into a no-op expression, leaving
+    # ``MulticlassIMV.__doc__`` as None.
+    ll = staticmethod(ll)
+    get_w = staticmethod(get_w)
+
     def __init__(self, data, outcome_variable, model_creator, n_splits=10, 
                  optional_explanatory_variables=None, random_state=None,
                  stratified=False, verbose=False):

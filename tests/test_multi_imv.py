@@ -4,22 +4,23 @@ Replicates the Nursery dataset example from Multi_IMV_Nursery.ipynb
 """
 
 import warnings
+
 warnings.filterwarnings("ignore")
 import pytest
 
 pytestmark = pytest.mark.slow
 
-import sys
 import os
+import sys
 
 # Figures belong beside the tests, never in whatever directory pytest was
 # launched from.
 FIGURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figures')
 os.makedirs(FIGURES_DIR, exist_ok=True)
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-import matplotlib.pyplot as plt
 
 # Add parent directory to path to import the package
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -188,7 +189,7 @@ def test_multi_imv_confusion_matrix():
     feature_cols = [col for col in nursery.columns if col != 'target']
     
     print(f"\nUsing {len(feature_cols)} features")
-    print(f"Computing pairwise IMV for all class combinations")
+    print("Computing pairwise IMV for all class combinations")
     
     # Create evaluator
     evaluator = MulticlassIMV(

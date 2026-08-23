@@ -1,13 +1,17 @@
 """Reusable, side-effect-free plotting helpers for IMV results."""
 
-from typing import Optional, Sequence, Tuple
+# Postponed evaluation so PEP 604 unions (``X | None``) are legal on Python 3.9,
+# the oldest version this package supports.
+from __future__ import annotations
+
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 
-def _axis(ax, figsize: Tuple[float, float]):
+def _axis(ax, figsize: tuple[float, float]):
     if ax is None:
         figure, ax = plt.subplots(figsize=figsize)
         return figure, ax, True
@@ -15,7 +19,7 @@ def _axis(ax, figsize: Tuple[float, float]):
 
 
 def plot_imv_heatmap(matrix, *, ax=None, figsize=(6, 6), title="IMV matrix",
-                     labels: Optional[Sequence[str]] = None, fmt=".3f"):
+                     labels: Sequence[str] | None = None, fmt=".3f"):
     """Plot a square IMV matrix and return ``(figure, axis)`` or the given axis."""
     data = np.asarray(matrix, dtype=float)
     if data.ndim != 2 or data.shape[0] != data.shape[1]:
