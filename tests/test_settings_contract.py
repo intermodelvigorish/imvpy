@@ -7,7 +7,13 @@ from pathlib import Path
 import yaml
 
 from imv import AblationIMV, BinaryIMV, MulticlassIMV
-from imv.utils.core import calculate_imv, get_w, ll
+from imv.utils.core import (
+    calculate_imv,
+    get_w,
+    imv_from_likelihoods,
+    ll,
+    vanilla_imv,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SETTINGS = yaml.safe_load((ROOT / "config/settings.yaml").read_text())
@@ -44,6 +50,11 @@ def test_core_settings_match_signatures():
     assert inverse["method"] == core["inverse"]["method"]
     assert inverse["chance_tolerance_nats"] == core["inverse"]["chance_tolerance_nats"]
     assert defaults(calculate_imv)["method"] == core["inverse"]["method"]
+    assert defaults(vanilla_imv)["epsilon"] == core["epsilon"]
+    assert defaults(vanilla_imv)["tolerance"] == core["inverse"]["tolerance_gtol"]
+    assert defaults(vanilla_imv)["method"] == core["inverse"]["method"]
+    assert defaults(imv_from_likelihoods)["tolerance"] == core["inverse"]["tolerance_gtol"]
+    assert defaults(imv_from_likelihoods)["method"] == core["inverse"]["method"]
 
 
 def test_shap_settings_match_constructor():

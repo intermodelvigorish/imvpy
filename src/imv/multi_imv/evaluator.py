@@ -34,7 +34,7 @@ class MulticlassIMV:
     """
     Multinomial IMV for multi-class classification problems.
     
-    This class extends IMV to handle classification tasks with 3 or more classes,
+    This class extends IMV to classification tasks with multiple classes,
     providing both one-vs-all IMV scores and pairwise IMV confusion matrices.
     
     Parameters
@@ -44,7 +44,8 @@ class MulticlassIMV:
     outcome_variable : str
         Name of the outcome/target column
     model_creator : callable
-        Function that returns a fresh instance of the model
+        Zero-argument function returning a fresh classifier with ``fit`` and
+        ``predict_proba``; fitted models must expose aligned ``classes_`` arrays.
     n_splits : int, default=10
         Number of folds for k-fold cross-validation
     optional_explanatory_variables : list, optional
@@ -246,9 +247,9 @@ class MulticlassIMV:
             Data with outcome variable
         outcome_variable : str
             Name of outcome column
-        p_base : array-like
+        p_base : array-like, shape (n_samples, n_classes)
             Predicted probabilities from base model
-        p_enhanced : array-like
+        p_enhanced : array-like, shape (n_samples, n_classes)
             Predicted probabilities from enhanced model
         classes : array-like, optional
             Label of each probability column, in column order (``model.classes_``).
@@ -316,7 +317,7 @@ class MulticlassIMV:
             3. Average IMV scores across all folds
             
         Side Effects:
-            Prints IMV results for all folds to console.
+            Prints IMV results for all folds when ``verbose=True``.
             
         Example Output:
             IMV results across folds: [[0.15, 0.23, 0.18], [0.14, 0.21, 0.19], ...]
@@ -385,14 +386,14 @@ class MulticlassIMV:
             3. Average matrices element-wise across all folds
             
         Side Effects:
-            Prints the averaged IMV matrix to console.
+            Prints the averaged IMV matrix when ``verbose=True``.
             
         Example Output:
             Average IMV Matrix:
                    0      1      2
             0  0.000  0.145  0.123
-            1  0.132  0.000  0.098
-            2  0.115  0.102  0.000
+            1  0.145  0.000  0.098
+            2  0.123  0.098  0.000
             
         Note:
             - Diagonal elements are always 0 (no self-discrimination)

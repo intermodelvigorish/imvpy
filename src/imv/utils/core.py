@@ -51,10 +51,12 @@ def _g(w):
 
 
 class BelowChanceLikelihoodWarning(UserWarning):
-    """A likelihood fell below 0.5, where no equivalent coin weight exists.
+    """A likelihood was too far below 0.5 for a boundary approximation.
 
-    Emitted by :func:`get_w`, which returns NaN in that case. See
-    :func:`information_deficit` for a quantity that stays defined there.
+    Emitted by :func:`get_w`, which returns NaN when the below-chance residual
+    exceeds ``chance_tolerance_nats``. Values just below 0.5 return the boundary
+    weight 0.5 without this warning. See :func:`information_deficit` for a
+    quantity that stays defined throughout the below-chance region.
     """
 
 
@@ -93,8 +95,10 @@ def information_deficit(a):
 
 
 def _as_1d_finite(name, values):
-    """Return *values* as a non-empty, finite, one-dimensional float array."""
+    """Return a scalar or 1-D input as a non-empty, finite float array."""
     array = np.asarray(values, dtype=float)
+    if array.ndim == 0:
+        array = array.reshape(1)
     if array.ndim != 1:
         raise ValueError(f"{name} must be a one-dimensional array")
     if array.size == 0:
@@ -102,6 +106,28 @@ def _as_1d_finite(name, values):
     if not np.all(np.isfinite(array)):
         raise ValueError(f"{name} must contain only finite values")
     return array
+
+
+def _as_prediction_vector(name, values, length, reference_name="y"):
+    """Return predictions of *length*, broadcasting only genuine scalars."""
+    is_scalar = np.asarray(values).ndim == 0
+    array = _as_1d_finite(name, values)
+    if is_scalar:
+        return np.full(length, array.item(), dtype=float)
+    if array.size != length:
+        raise ValueError(f"{name} and {reference_name} must have the same length")
+    return array
+
+
+def _as_likelihood_scalar(name, value):
+    """Validate one geometric mean likelihood without accepting vectors."""
+    array = np.asarray(value, dtype=float)
+    if array.ndim != 0:
+        raise ValueError(f"{name} must be a scalar geometric mean likelihood")
+    value = float(array)
+    if not np.isfinite(value) or not 0 < value <= 1:
+        raise ValueError(f"{name} must be a finite likelihood in (0, 1]")
+    return value
 
 
 def ll(x, p, epsilon=1e-9):
@@ -112,8 +138,10 @@ def ll(x, p, epsilon=1e-9):
     Computes the geometric mean of likelihood values across all samples.
     
     Args:
-        x (np.ndarray): True binary labels (0 or 1), shape (n_samples,)
-        p (np.ndarray): Predicted probabilities for positive class, shape (n_samples,)
+        x (array-like or scalar): True binary labels (0 or 1). A scalar is
+            treated as one observation.
+        p (array-like or scalar): Predicted probabilities for the positive
+            class. A scalar is broadcast across all observations in ``x``.
         epsilon (float, optional): Clipping bound that keeps log() finite at
             exact 0/1 predictions. Must lie in (0, 0.5). Default: 1e-9
 
@@ -139,6 +167,9 @@ def ll(x, p, epsilon=1e-9):
         >>> y_pred_random = np.array([0.5, 0.5, 0.5, 0.5, 0.5])
         >>> ll(y_true, y_pred_random)
         0.5  # Random guessing
+
+        >>> ll(y_true, 0.5)  # A constant prevalence/null prediction
+        0.5
         
     Note:
         - Clips p into [ε, 1-ε] to handle edge cases where p=0 or p=1
@@ -149,7 +180,7 @@ def ll(x, p, epsilon=1e-9):
         - Identical implementation used across all IMV modules
     """
     x = _as_1d_finite("x", x)
-    p = _as_1d_finite("p", p)
+    p = _as_prediction_vector("p", p, x.size, reference_name="x")
     if x.shape != p.shape:
         raise ValueError("x and p must have the same length")
     if not np.all(np.isin(x, (0.0, 1.0))):
@@ -275,7 +306,8 @@ def get_w(a, guess=0.5, bounds=[(CHANCE_FLOOR, DEFAULT_UPPER_BOUND)], tolerance=
         >>> # Good predictions (high likelihood)
         >>> a_good = 0.8
         >>> w = get_w(a_good)
-        >>> print(f"w = {w:.3f}")  # w ≈ 0.92 (high information)
+        >>> 0.5 < w < 1
+        True
         
         >>> # Poor predictions (low likelihood)
         >>> a_poor = 0.5
@@ -358,20 +390,64 @@ def get_w(a, guess=0.5, bounds=[(CHANCE_FLOOR, DEFAULT_UPPER_BOUND)], tolerance=
     return float(res.x[0])
 
 
-def calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9, tolerance=1e-09,
+def imv_from_likelihoods(likelihood_basic, likelihood_enhanced, tolerance=1e-09,
+                         method=DEFAULT_INVERSE_METHOD):
+    """Calculate vanilla IMV from two geometric mean likelihoods.
+
+    This is Eq. 6 of Domingue, Rahal, et al. (2025) after the two predictive
+    systems have already been reduced to their geometric mean likelihoods from
+    Eq. 2. Inputs must be scalar values in ``(0, 1]``; use
+    :func:`calculate_imv` when individual outcomes and probabilities are
+    available.
+
+    Args:
+        likelihood_basic (real scalar): Baseline geometric mean likelihood.
+        likelihood_enhanced (real scalar): Enhanced geometric mean likelihood.
+        tolerance (float, optional): Optimization tolerance forwarded to
+            :func:`get_w`; used only when ``method="lbfgsb"``.
+        method ({"brentq", "lbfgsb"}, optional): Inverse-entropy backend.
+
+    Returns:
+        float: ``(w_enhanced - w_basic) / w_basic``.
+
+    Examples:
+        >>> imv_from_likelihoods(0.5, 0.8) > 0
+        True
+        >>> imv_from_likelihoods(1, 1)
+        0.0
+    """
+    likelihood_basic = _as_likelihood_scalar("likelihood_basic", likelihood_basic)
+    likelihood_enhanced = _as_likelihood_scalar(
+        "likelihood_enhanced", likelihood_enhanced
+    )
+    w0 = get_w(likelihood_basic, tolerance=tolerance, method=method)
+    w1 = get_w(likelihood_enhanced, tolerance=tolerance, method=method)
+    return float((w1 - w0) / w0)
+
+
+def calculate_imv(y_basic, y_enhanced, y=None, epsilon=1e-9, tolerance=1e-09,
                   method=DEFAULT_INVERSE_METHOD):
     """
     Calculate the InterModel Vigorish (IMV) score.
     
     Computes the package's relative transformed-likelihood score when comparing
-    an enhanced model against a basic model. It is a bespoke ratio, not a
-    percentage of mutual information or likelihood.
+    an enhanced model against a basic model. With three arguments, inputs are
+    probability predictions and binary outcomes. With two arguments, inputs are
+    scalar geometric mean likelihoods and the calculation delegates to
+    :func:`imv_from_likelihoods`.
     
     Args:
-        y_basic (np.ndarray): Predictions from basic/null model, shape (n_samples,)
-        y_enhanced (np.ndarray): Predictions from enhanced model with features, shape (n_samples,)
-        y (np.ndarray): True binary labels, shape (n_samples,)
-        epsilon (float, optional): Probability clipping bound for ll(). Default: 1e-9
+        y_basic (array-like or scalar): Predictions from the basic/null model,
+            or its scalar geometric mean likelihood when ``y`` is omitted. A
+            scalar prediction is broadcast across all observations.
+        y_enhanced (array-like or scalar): Predictions from the enhanced model,
+            or its scalar geometric mean likelihood when ``y`` is omitted. A
+            scalar prediction is broadcast across all observations.
+        y (array-like or scalar, optional): True binary labels. A scalar is a
+            valid one-observation dataset. Omit only when the first two arguments
+            are already geometric mean likelihoods.
+        epsilon (float, optional): Probability clipping bound for :func:`ll` in
+            prediction mode. Default: 1e-9
         tolerance (float, optional): Optimization tolerance forwarded to get_w();
             used only when method="lbfgsb". Default: 1e-09
         method ({"brentq", "lbfgsb"}, optional): Inverse-entropy backend forwarded
@@ -389,11 +465,11 @@ def calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9, tolerance=1e-09,
             w_enhanced = get_w(ll(y, y_enhanced))
             
     Interpretation:
-        - IMV > 0: Enhanced model has more information
-          * IMV = 0.10 means 10% information gain
-          * IMV = 0.50 means 50% information gain
+        - IMV > 0: Enhanced model has a larger equivalent-coin weight
+          * IMV = 0.10 means that weight is 10% larger than the baseline weight
+          * IMV = 0.50 means that weight is 50% larger than the baseline weight
         - IMV = 0: No information gain (models equivalent)
-        - IMV < 0: Enhanced model is worse (rare, indicates overfitting)
+        - IMV < 0: Enhanced predictions score worse than the baseline
         
     Examples:
         >>> # Good feature adds information
@@ -402,6 +478,14 @@ def calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9, tolerance=1e-09,
         >>> y_model = np.array([0.9, 0.1, 0.8, 0.85, 0.15])  # Uses features
         >>> imv = calculate_imv(y_null, y_model, y_true)
         >>> print(f"IMV: {imv:.3f}")  # IMV > 0, feature is useful
+
+        >>> # Constant predictions are broadcast, as in the paper's toy example.
+        >>> calculate_imv(0.6, y_model, y_true) > 0
+        True
+
+        >>> # If only the Eq. 2 likelihoods remain, outcomes are not required.
+        >>> calculate_imv(ll(y_true, 0.6), ll(y_true, y_model)) > 0
+        True
         
         >>> # Bad feature doesn't help
         >>> y_bad = np.array([0.55, 0.58, 0.62, 0.59, 0.57])  # Noisy predictions
@@ -420,30 +504,53 @@ def calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9, tolerance=1e-09,
         - Directional: reversing basic and enhanced changes the denominator
         - Probability-sensitive: calibration and probability scaling matter
         
-    Performance:
-        - Fast: O(n_samples) complexity
-        - Typical runtime: <1ms for 1000 samples
-        - Optimization converges in <10 iterations
-        
     Note:
         - Ensure predictions are probabilities in [0, 1]
         - For multi-class, use one-vs-rest or pairwise encoding
         - This Bernoulli implementation is not valid for regression
     """
-    y_basic = _as_1d_finite("y_basic", y_basic)
-    y_enhanced = _as_1d_finite("y_enhanced", y_enhanced)
+    if y is None:
+        return imv_from_likelihoods(
+            y_basic,
+            y_enhanced,
+            tolerance=tolerance,
+            method=method,
+        )
+
     y = _as_1d_finite("y", y)
-    if not (y_basic.shape == y_enhanced.shape == y.shape):
-        raise ValueError("y_basic, y_enhanced, and y must have the same length")
+    y_basic = _as_prediction_vector("y_basic", y_basic, y.size)
+    y_enhanced = _as_prediction_vector("y_enhanced", y_enhanced, y.size)
     ll_basic = ll(y, y_basic, epsilon=epsilon)
     ll_enhanced = ll(y, y_enhanced, epsilon=epsilon)
-    w0 = get_w(ll_basic, tolerance=tolerance, method=method)
-    w1 = get_w(ll_enhanced, tolerance=tolerance, method=method)
-    return (w1 - w0) / w0
+    return imv_from_likelihoods(
+        ll_basic,
+        ll_enhanced,
+        tolerance=tolerance,
+        method=method,
+    )
+
+
+def vanilla_imv(baseline, enhanced, outcomes=None, epsilon=1e-9, tolerance=1e-09,
+                method=DEFAULT_INVERSE_METHOD):
+    """Friendly public name for the canonical binary IMV calculation.
+
+    This has the same two call forms as :func:`calculate_imv` and exists to make
+    the original ("vanilla") metric discoverable alongside the SHAP, multiclass,
+    and ablation extensions.
+    """
+    return calculate_imv(
+        baseline,
+        enhanced,
+        outcomes,
+        epsilon=epsilon,
+        tolerance=tolerance,
+        method=method,
+    )
 
 
 # Convenience function for backward compatibility
-def imv_from_probs(p_basic, p_enhanced, y_true, epsilon=1e-9, tolerance=1e-09):
+def imv_from_probs(p_basic, p_enhanced, y_true, epsilon=1e-9, tolerance=1e-09,
+                   method=DEFAULT_INVERSE_METHOD):
     """
     Calculate IMV from probability predictions.
     
@@ -451,11 +558,14 @@ def imv_from_probs(p_basic, p_enhanced, y_true, epsilon=1e-9, tolerance=1e-09):
     Useful when working with probability arrays directly.
     
     Args:
-        p_basic (np.ndarray): Predicted probabilities from basic model
-        p_enhanced (np.ndarray): Predicted probabilities from enhanced model
-        y_true (np.ndarray): True binary labels
-        epsilon (float, optional): Smoothing factor. Default: 1e-9
-        tolerance (float, optional): Optimization tolerance. Default: 1e-09
+        p_basic (array-like or scalar): Predicted probabilities from basic model
+        p_enhanced (array-like or scalar): Predicted probabilities from enhanced model
+        y_true (array-like or scalar): True binary labels
+        epsilon (float, optional): Probability clipping bound in (0, 0.5).
+            Default: 1e-9
+        tolerance (float, optional): Optimization tolerance used only by the
+            ``"lbfgsb"`` backend. Default: 1e-09
+        method ({"brentq", "lbfgsb"}, optional): Inverse-entropy backend.
         
     Returns:
         float: IMV score
@@ -464,4 +574,11 @@ def imv_from_probs(p_basic, p_enhanced, y_true, epsilon=1e-9, tolerance=1e-09):
         This is simply an alias for calculate_imv() with different parameter names.
         Use whichever naming convention is clearer for your use case.
     """
-    return calculate_imv(p_basic, p_enhanced, y_true, epsilon=epsilon, tolerance=tolerance)
+    return calculate_imv(
+        p_basic,
+        p_enhanced,
+        y_true,
+        epsilon=epsilon,
+        tolerance=tolerance,
+        method=method,
+    )

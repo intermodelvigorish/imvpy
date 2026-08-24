@@ -1,11 +1,20 @@
 # Examples
 
-Eight self-contained notebooks. Every one runs from a **cold clone**: no dataset is
+Ten self-contained notebooks. Every one runs from a **cold clone**: no dataset is
 stored in this repository, and each notebook downloads what it needs into a cache
 outside the working tree.
 
 Each notebook is a complete pipeline — download, preprocess, fit, score IMV — with
 no shared helper modules, so it can be read and run in isolation.
+The download call is executable notebook code, not a manual setup step, and no
+notebook reads a dataset from a repository-relative path. Provider caches live
+outside the working tree and may be reused on later runs.
+
+Every notebook imports the installable `imv` package directly and fails fast unless
+`imv.__file__` resolves to this checkout's `src/imv`. The ablation notebooks also
+delegate seeding, device selection, training, prediction formatting, matrix
+calculation, and matrix averaging to `AblationIMV`; they do not carry notebook-local
+copies of those package implementations.
 
 ## Binary — exact SHAP-IMV (`shap_imv/`)
 
@@ -28,24 +37,33 @@ no shared helper modules, so it can be read and run in isolation.
 
 | Notebook | Source | Runtime |
 |---|---|---|
-| `ablation_imv_imdb.ipynb` | HF `stanfordnlp/imdb` | **~2 h** (25 DistilBERT runs) |
+| `ablation_imv_imdb.ipynb` | HF `stanfordnlp/imdb` | **~2 h accelerated; several hours CPU-only** (25 DistilBERT runs) |
+| `ablation_imv_mnist.ipynb` | OpenML `mnist_784` v1 | ~5 min (25 one-epoch CNN runs, 4 CPU threads) |
+| `ablation_imv_har.ipynb` | UCI HAR id 240 | ~7 min (25 15-epoch recurrent/MLP runs, 4 CPU threads) |
 
 ## Running them
 
 ```bash
-pip install -e ".[examples]"                  # package + jupyter + UCI/XGBoost/LightGBM
-pip install -e ".[examples-deep-learning]"    # adds torch/transformers/datasets
+pip install -r requirements.txt                # run from the repository root
 jupyter lab
 ```
 
-Launch each notebook with its own directory as the working directory; `results/`
-and `figures/` are written beside it.
+Rendered tables and figures are embedded in each executed notebook. Optional CSV
+and image exports, downloaded datasets, and restart predictions are written only
+under `~/.cache/imv`; set `IMV_CACHE_HOME`, `IMV_DATA_CACHE`, or
+`IMV_ARTIFACT_CACHE` to override those external locations.
 
-The ablation notebook selects CUDA, then Apple Silicon MPS, then CPU
-automatically, so it runs unchanged across platforms. Its configuration (5,000
-train rows, 256 tokens, 2 epochs) is a documented compute budget rather than the
-published setting — see the documentation for why bit-exact replication is not
-achievable on any other machine.
+Every figure is exported through `imv.utils.save_figure` as an 800-DPI PNG plus
+vector PDF and SVG siblings. These files remain in the external artifact cache;
+the rendered notebook output is the only figure representation committed here.
+
+The ablation notebooks select CUDA, then Apple Silicon MPS, then CPU
+automatically, so they run unchanged across platforms. The IMDb configuration
+(5,000 train rows, 256 tokens, 2 epochs) is a documented compute budget rather
+than the published setting — see the documentation for why bit-exact replication
+is not achievable on any other machine. MNIST uses its canonical 60,000/10,000
+split and one epoch per fit. HAR uses UCI's subject-disjoint 21-participant/
+9-participant split and 15 epochs per fit.
 
 ## These are our own runs
 
@@ -70,6 +88,8 @@ outputs without re-running anything.
 | Car Evaluation | 4 classes in explicit order `unacc < acc < good < vgood` | all 6 categoricals → integer codes |
 | Dry Bean | 7 classes, alphabetical (no natural order) | all 16 numerics standardised |
 | IMDb | supplied `label` | class-balanced 5,000/5,000 subsample, truncated to 256 tokens |
+| MNIST | `digit % 2` (odd vs even) | canonical 60,000/10,000 split; pixels use standard MNIST normalization |
+| HAR | `WALKING_UPSTAIRS` vs `WALKING_DOWNSTAIRS` | 128x9 inertial windows; official subject-disjoint split; train-only channel scaling |
 
 Two example-grade shortcuts apply and are not recommendations:
 
@@ -82,13 +102,15 @@ Two example-grade shortcuts apply and are not recommendations:
   `1, 2, 0`. This costs logistic regression real signal; the tree models are
   largely unaffected.
 
-The maintainers' documentation carries the full comparative treatment, including
-exact row counts and the reasoning behind each choice.
+The public pages under `documentation/examples/` carry the full comparative
+treatment, including exact row counts and the reasoning behind each choice.
 
 ## Conventions
 
-- **Five seeds** (42–46) everywhere. Reported values are means; the spread
-  describes stability and is **not** a confidence interval.
+- **Five complete runs per estimator or architecture** (seeds 42–46). Every
+  tabular estimator and every ablation variant is fitted under each seed.
+  Reported values are means; the spread describes stability and is **not** a
+  confidence interval.
 - **Three estimator families** — logistic regression, XGBoost, LightGBM.
 - Features are standardised wherever an unscaled input would otherwise leave
   logistic regression unconverged.

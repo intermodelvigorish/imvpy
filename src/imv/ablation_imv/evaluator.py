@@ -41,11 +41,12 @@ from ..utils.core import calculate_imv, get_w, ll  # noqa: E402,F401
 
 class AblationIMV:
     """
-    Ablation IMV for deep learning models (especially NLP transformers).
+    Train binary PyTorch variants and compare aligned predictions with IMV.
     
-    This class performs ablation studies by training models with different
-    architectural modifications (reduced layers, removed components) and
-    calculating IMV to measure the impact of each modification.
+    The training helper supports models that accept dictionary batches and return
+    ``loss`` and two-class ``logits``. The static matrix methods are
+    framework-independent and compare prediction DataFrames from any binary
+    probabilistic model.
     
     The class automatically detects and uses GPU if available, otherwise uses CPU.
     
@@ -56,9 +57,10 @@ class AblationIMV:
 
     Notes
     -----
-    Only the constructor and :meth:`train_and_evaluate` need PyTorch. The static
-    methods :meth:`calculate_imv_matrix` and :meth:`average_imv_matrices` score
-    saved prediction frames and work without the ``deep-learning`` extra.
+    The constructor, seeding, training, and :meth:`reduce_bert_layers` need
+    PyTorch. The static methods :meth:`calculate_imv_matrix` and
+    :meth:`average_imv_matrices` score saved prediction frames without an
+    instance or the ``deep-learning`` extra.
     """
 
     # Notebook-era compatibility while retaining one canonical implementation.
@@ -97,6 +99,11 @@ class AblationIMV:
         ----------
         seed : int, optional
             Random seed. If None, uses self.random_seed
+
+        Notes
+        -----
+        Seeds Python, NumPy, PyTorch CPU, CUDA, and MPS generators. This does not
+        guarantee bit-identical accelerator kernels across hardware or versions.
         """
         if seed is None:
             seed = self.random_seed
@@ -172,7 +179,8 @@ class AblationIMV:
         Parameters
         ----------
         model : torch.nn.Module
-            PyTorch model to train
+            Binary model accepting each batch as keyword arguments and returning
+            an object with scalar ``loss`` and two-column ``logits`` attributes.
         train_dataloader : DataLoader
             Training data loader
         test_dataloader : DataLoader
@@ -184,7 +192,9 @@ class AblationIMV:
         optimizer_class : class, optional
             Optimizer class (e.g., AdamW). If None, uses torch.optim.Adam
         scheduler_fn : callable, optional
-            Function to create learning rate scheduler
+            Function called as ``scheduler_fn(optimizer=optimizer,
+            num_training_steps=num_training_steps)``. Its result must implement
+            ``step()``.
         seed : int, optional
             Random seed for this run
         verbose : bool, default=True
@@ -195,7 +205,8 @@ class AblationIMV:
         dict
             Dictionary containing:
             - 'model': trained model
-            - 'test_predictions': DataFrame with predictions and labels
+            - 'test_predictions': DataFrame with negative/positive probability,
+              true label, and predicted label columns
             - 'test_accuracy': float
             - 'test_precision': float
             - 'test_recall': float
@@ -326,6 +337,12 @@ class AblationIMV:
             Name of the column containing true binary labels
         prob_column : str, default='Positive Probability'
             Name of the column containing predicted probabilities for positive class
+
+        Raises
+        ------
+        ValueError
+            If no variants are supplied, required columns are missing, or labels
+            and row counts are not identical across prediction frames.
             
         Returns
         -------
@@ -439,7 +456,7 @@ class AblationIMV:
         Note:
             - Element-wise averaging (not matrix algebra)
             - Preserves index and column labels from first matrix
-            - Recommended: Use at least 3-5 seeds for stable estimates
+            - Recommended: Use at least five complete seeds when fits are stochastic
             - Standard deviation can be computed separately with np.std()
         """
         if not matrices_list:

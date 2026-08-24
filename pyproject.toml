@@ -50,20 +50,26 @@ examples = [
   "xgboost>=2",
   "lightgbm>=4",
 ]
-# The IMDb ablation notebook additionally fine-tunes DistilBERT.
+# Deep-learning examples: MNIST/HAR use PyTorch; IMDb also needs Transformers/Datasets.
 examples-deep-learning = [
   "imv[examples,deep-learning]",
   "transformers>=4.40",
   "datasets>=2.18",
 ]
+docs = [
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.5,<10",
+  "mkdocstrings[python]>=0.30,<1",
+]
 dev = [
-  "imv[progress,notebooks,test]",
+  "imv[progress,notebooks,test,docs]",
   "build>=1",
   "ruff>=0.5",
   "mypy>=1.8",
 ]
 
 [project.urls]
+Documentation = "https://intermodelvigorish.github.io/imv_ml_package/"
 Repository = "https://github.com/intermodelvigorish/imv_ml_package"
 Issues = "https://github.com/intermodelvigorish/imv_ml_package/issues"
 

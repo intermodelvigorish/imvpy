@@ -1,15 +1,18 @@
 import warnings
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from imv.core import (
     BelowChanceLikelihoodWarning,
     calculate_imv,
     get_w,
+    imv_from_likelihoods,
     imv_from_probs,
     information_deficit,
     ll,
+    vanilla_imv,
 )
 from imv.utils.core import DEFAULT_UPPER_BOUND
 
@@ -139,6 +142,84 @@ def test_calculate_imv_identity_alias_and_shape_validation():
     assert imv_from_probs(p, p, y) == pytest.approx(0.0)
     with pytest.raises(ValueError, match="same length"):
         calculate_imv(p[:-1], p, y)
+
+
+def test_plos_toy_example_accepts_a_scalar_baseline():
+    """Reproduce S1-II.1 of Domingue, Rahal, et al. to six decimals."""
+    outcomes = np.array([
+        0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    ])
+    enhanced = np.repeat([0.5, 0.9], 20)
+
+    score = vanilla_imv(0.55, enhanced, outcomes)
+
+    assert score == pytest.approx(0.23722913125143966, abs=1e-12)
+    assert round(score, 6) == 0.237229
+    assert ll(outcomes, 0.55) == pytest.approx(
+        ll(outcomes, np.full(outcomes.size, 0.55))
+    )
+
+
+def test_vanilla_imv_accepts_series_lists_and_scalar_observations():
+    outcomes = pd.Series([0, 1, 0, 1], name="observed")
+    enhanced = pd.Series([0.2, 0.8, 0.3, 0.7], name="enhanced")
+
+    from_series = vanilla_imv(0.5, enhanced, outcomes)
+    from_arrays = calculate_imv(
+        np.full(4, 0.5),
+        enhanced.to_numpy(),
+        outcomes.to_numpy(),
+    )
+    from_lists = imv_from_probs(
+        [0.5] * 4,
+        enhanced.tolist(),
+        outcomes.tolist(),
+    )
+
+    assert from_series == pytest.approx(from_arrays)
+    assert from_lists == pytest.approx(from_arrays)
+    assert vanilla_imv(0.5, 0.9, 1) > 0
+    assert ll(1, np.float64(0.9)) == pytest.approx(0.9)
+
+
+def test_likelihood_entry_points_match_prediction_entry_point():
+    outcomes = np.array([0, 1, 0, 1])
+    basic = np.full(outcomes.size, 0.5)
+    enhanced = np.array([0.2, 0.8, 0.3, 0.7])
+    likelihood_basic = ll(outcomes, basic)
+    likelihood_enhanced = ll(outcomes, enhanced)
+    expected = calculate_imv(basic, enhanced, outcomes)
+
+    assert imv_from_likelihoods(likelihood_basic, likelihood_enhanced) == pytest.approx(
+        expected
+    )
+    assert calculate_imv(likelihood_basic, likelihood_enhanced) == pytest.approx(expected)
+    assert vanilla_imv(np.float64(likelihood_basic), likelihood_enhanced) == pytest.approx(
+        expected
+    )
+    assert imv_from_likelihoods(1, 1) == pytest.approx(0.0)
+
+
+def test_only_true_scalar_predictions_are_broadcast():
+    outcomes = np.array([0, 1, 0, 1])
+    enhanced = np.array([0.2, 0.8, 0.3, 0.7])
+
+    with pytest.raises(ValueError, match="same length"):
+        vanilla_imv(np.array([0.5]), enhanced, outcomes)
+    with pytest.raises(ValueError, match="same length"):
+        vanilla_imv(pd.Series([0.5]), enhanced, outcomes)
+    with pytest.raises(ValueError, match="scalar geometric mean likelihood"):
+        imv_from_likelihoods(np.array([0.5]), 0.8)
+    with pytest.raises(ValueError, match="scalar geometric mean likelihood"):
+        calculate_imv(np.array([0.5]), np.array([0.8]))
+
+
+def test_vanilla_functions_are_available_from_the_top_level_package():
+    import imv
+
+    assert imv.vanilla_imv is vanilla_imv
+    assert imv.imv_from_likelihoods is imv_from_likelihoods
 
 
 def test_below_chance_likelihood_is_nan_not_the_lower_bound():

@@ -57,21 +57,30 @@ class BinaryIMV:
     Core IMV functions (ll, get_w, calculate_imv) are imported from imv.core module,
     ensuring consistency across all IMV implementations.
     
-    Attributes:
-        data (pd.DataFrame): Input dataset containing features and outcome
-        outcome_variable (str): Name of the target/outcome column
-        optional_explanatory_variables (list): List of feature column names to evaluate
-        model_creator (callable): Function that returns a new model instance
-        split_method (str): Evaluation method - 'kfold' or 'train_test_split'
-        n_splits (int): Number of folds for k-fold cross-validation
-        prop_test (float): Proportion of data for test set (train_test_split only)
-        model_type (str): Must be 'classification'
-        random_seed (int): Random seed for reproducibility
-        all_combinations_imv (dict): Storage for computed IMV scores
+    Args:
+        data (pd.DataFrame): Complete-case feature and binary-outcome data.
+        outcome_variable (str): Name of the 0/1 target column.
+        optional_explanatory_variables (list[str]): Feature universe whose full
+            power set will be evaluated.
+        model_creator (callable): Zero-argument factory returning a fresh binary
+            classifier with ``fit`` and ``predict_proba``. Positive-class
+            probability must be column 1.
+        split_method (str, optional): One of ``"kfold"``,
+            ``"stratified_kfold"``, ``"train_test_split"``, or
+            ``"stratified_train_test_split"``. Default: ``"kfold"``.
+        n_splits (int, optional): Fold count in K-fold modes. Default: 5.
+        prop_test (float, optional): Test fraction in holdout modes. Default: 0.2.
+        model_type (str, optional): Must be ``"classification"``. Default:
+            ``"classification"``.
+        all_combinations_imv (dict, optional): Precomputed coalition mapping in
+            the format returned by :meth:`run_evaluation`. Default: None.
+        random_seed (int, optional): Split random state. Default: 42.
+        n_jobs (int, optional): joblib workers across coalitions. Default: 1.
+        verbose (bool, optional): Show progress and summaries. Default: False.
         
     Examples:
         >>> from sklearn.linear_model import LogisticRegression
-        >>> from imv.binary import BinaryIMV
+        >>> from imv import BinaryIMV
         >>> 
         >>> evaluator = BinaryIMV(
         ...     data=df,
@@ -133,12 +142,11 @@ class BinaryIMV:
         
         Uses the shared calculate_imv() function from imv.core module.
         Computes IMV by comparing predictions from a basic model (intercept-only)
-        and an enhanced model (with features). Handles both classification and
-        binary classification tasks.
+        and an enhanced binary classifier (with features).
         
         Args:
-            model_basic: Trained basic/null model (intercept only)
-            model_enhanced: Trained enhanced model with features
+            model_basic (object): Trained basic/null model (intercept only)
+            model_enhanced (object): Trained enhanced model with features
             X_basic (pd.DataFrame): Basic features (constant only)
             X_enhanced (pd.DataFrame): Enhanced features (all variables)
             y (pd.Series): True labels/targets
@@ -230,18 +238,23 @@ class BinaryIMV:
         
         Side Effects:
             - Populates self.all_combinations_imv with results
-            - Prints the best performing feature combination
+            - Prints the best performing feature combination when ``verbose=True``
+
+        Returns:
+            dict: Mapping from each feature tuple to
+            ``(mean_imv, list_of_fold_scores)``. The same mapping is assigned to
+            ``self.all_combinations_imv``.
             
         Process:
             1. Generate all possible feature subsets (including empty set)
-            2. Compute IMV for each subset in parallel using all CPU cores
+            2. Compute IMV for each subset with the configured joblib worker count
             3. Store results as {combination: (mean_imv, fold_scores)}
             4. Identify and report best performing combination
             
         Note:
             - Computational complexity: O(2^n * k * m)
               where n=features, k=folds, m=training time per model
-            - Uses joblib.Parallel with n_jobs=-1 for maximum parallelization
+            - Uses joblib.Parallel with ``self.n_jobs`` (default 1)
             - Progress shown via tqdm progress bar
             
         Example:
@@ -413,9 +426,15 @@ class BinaryIMV:
             - Negative: Variable reduces model information (rare)
             - Magnitude: Average marginal contribution across all contexts
             
+        Warns:
+            IncompleteCoalitionWarning: If the supplied coalition mapping lacks
+                a subset required for the exact Shapley sum. The compatibility
+                fallback is not a valid additive Shapley value.
+
         Note:
-            Prints the computed value and returns it.
-            Must call run_evaluation() first to populate all_combinations_imv.
+            Prints the computed value only when ``verbose=True`` and always
+            returns it. Call run_evaluation() first to populate
+            all_combinations_imv.
         """
         if variable not in self.optional_explanatory_variables:
             raise ValueError(
@@ -485,8 +504,8 @@ class BinaryIMV:
             4. Annotate bars with numeric values
             
         Note:
-            Must call run_evaluation() before this method.
-            Prints individual SHAP-IMV values during computation.
+            Must call run_evaluation() before this method. Prints individual
+            SHAP-IMV values during computation only when ``verbose=True``.
             
         Example:
             >>> fig, ax = evaluator.evaluate_imvshapley(figsize=(14, 6))

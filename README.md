@@ -20,7 +20,9 @@ The canonical method is defined for binary outcomes and probability predictions.
 
 ### Key Features
 
-**Three Powerful Modules:**
+**Canonical metric and three extensions:**
+- **Vanilla IMV**: Direct comparison from outcomes and probabilities, or from
+  two geometric mean likelihoods
 - **Binary IMV**: Binary classification with exact IMV-Shapley feature attribution
 - **Multi-class IMV**: An extension using one-vs-rest and pairwise comparisons
 - **Ablation IMV**: Deep learning ablation studies with GPU support
@@ -61,8 +63,15 @@ python -c "import imv; print(imv.__version__)"
 ```
 
 > The sources live under `src/`, so `import imv` only works after installing.
-> There is no `requirements.txt`: `pyproject.toml` is the single source of
-> dependency truth, and installing the package installs its dependencies.
+> `pyproject.toml` remains the single source of dependency truth;
+> `requirements.txt` is a thin convenience entry point that installs the local
+> package with every dependency needed by all ten example notebooks.
+
+To install the complete notebook runtime from the repository root:
+
+```bash
+pip install -r requirements.txt
+```
 
 ### Optional extras
 
@@ -72,12 +81,13 @@ All extras are declared in `pyproject.toml` under
 | Extra | Installs | For |
 |---|---|---|
 | `progress` | `tqdm-joblib` | nicer progress bars during coalition fitting |
-| `deep-learning` | PyTorch | `AblationIMV` **training** only |
+| `deep-learning` | PyTorch | `AblationIMV` construction, seeding, training, and BERT layer reduction |
 | `notebooks` | Jupyter, nbclient, nbformat | running any notebook |
 | `examples` | `notebooks` + `ucimlrepo`, XGBoost, LightGBM | the seven tabular examples |
-| `examples-deep-learning` | `examples` + `deep-learning` + transformers, datasets | the IMDb ablation example |
+| `examples-deep-learning` | `examples` + `deep-learning` + transformers, datasets | the IMDb, MNIST and HAR ablation examples |
 | `test` | pytest, pytest-cov, pyyaml, nbformat | the test suite |
-| `dev` | `progress` + `notebooks` + `test` + build, ruff, mypy | developing the library |
+| `docs` | MkDocs Material + mkdocstrings | building or serving the documentation |
+| `dev` | `progress` + `notebooks` + `test` + `docs` + build, ruff, mypy | developing the library |
 
 ```bash
 pip install ".[examples]"    # e.g. to run the tabular notebooks
@@ -85,8 +95,8 @@ pip install -e ".[dev]"      # e.g. to work on the library
 ```
 
 `AblationIMV` selects CUDA, then Apple Silicon MPS, then CPU automatically; no
-platform-specific configuration is needed. Computing IMV from saved predictions
-needs no PyTorch at all — only training does.
+platform-specific configuration is needed. Static matrix calculation and
+averaging from saved predictions need no PyTorch or evaluator instance.
 
 ### Development installation
 
@@ -108,7 +118,37 @@ conda activate imv
 
 ## Quick Start
 
-### 1. Binary IMV: Binary Classification
+### 1. Vanilla IMV
+
+The original PLOS supplementary example uses a scalar baseline probability and
+an observation-level enhanced prediction. Scalars are broadcast; NumPy arrays,
+pandas `Series`, lists and tuples are accepted positionally:
+
+```python
+import numpy as np
+from imv import ll, vanilla_imv
+
+observed = np.array([
+    0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+])
+enhanced = np.repeat([0.5, 0.9], 20)
+
+vanilla_imv(0.55, enhanced, observed)
+# 0.23722913125143966
+
+# The same Eq. 6 calculation from already-aggregated Eq. 2 likelihoods:
+vanilla_imv(ll(observed, 0.55), ll(observed, enhanced))
+# 0.23722913125143966
+```
+
+The argument order is always baseline, enhanced, then observed outcomes. In the
+two-argument form, both values must instead be scalar geometric mean
+likelihoods. Use `imv_from_likelihoods(a0, a1)` when you want to make that mode
+explicit. Use held-out probabilities for model comparison; in-sample values
+favor the more complex model.
+
+### 2. Binary IMV: Binary Classification
 
 Compute IMV-based feature importance for binary classification:
 
@@ -152,10 +192,11 @@ education_years 0.112
 hours_per_week 0.068
 ```
 
-The returned values are rounded to 3 decimals and sum to the full-model IMV.
-A negative value means the feature *reduced* out-of-fold information.
+The returned values are rounded to 3 decimals. Before rounding, they sum to the
+full-coalition value minus the empty-coalition value; rounding can leave a small
+residual. A negative value means the feature *reduced* out-of-fold information.
 
-### 2. Multi-class IMV: Multi-class Classification
+### 3. Multi-class IMV: Multi-class Classification
 
 Analyze multi-class classification problems:
 
@@ -193,7 +234,7 @@ fig, ax = evaluator.multinomial_IMV_heatmap(imv_matrix, figsize=(6, 6))
   `(y, p) -> (1-y, 1-p)`, and pairwise renormalisation gives `p_j = 1 - p_i`.
   Do not read it like the directional ablation matrix below.
 
-### 3. Ablation IMV: Deep Learning
+### 4. Ablation IMV: Deep Learning
 
 Quantify the importance of model components in deep learning:
 
@@ -253,13 +294,16 @@ imv_ml_package/
 │   ├── shap_imv/               # Binary exact SHAP-IMV
 │   ├── multi_imv/              # Multiclass IMV
 │   └── ablation_imv/           # Ablation training and comparison
-├── examples/                   # Eight executed notebooks, each self-contained
-│   ├── shap_imv/               # Notebooks, results, figures
-│   ├── multi_imv/              # Notebooks, results, figures
-│   └── ablation_imv/           # Notebooks, results, figures
+├── examples/                   # Ten executed notebooks, each self-contained
+│   ├── shap_imv/               # Executed binary SHAP-IMV notebooks
+│   ├── multi_imv/              # Executed multiclass IMV notebooks
+│   └── ablation_imv/           # Executed model-ablation notebooks
+├── documentation/              # Complete MkDocs guides and API reference
 ├── config/settings.yaml        # Documented defaults and reproducibility profiles
 ├── tests/                      # Unit, integration and contract tests
+├── mkdocs.yml                  # Strict documentation build and navigation
 ├── pyproject.toml              # Package metadata, dependencies, lint and test config
+├── requirements.txt            # One-command runtime for all example notebooks
 ├── environment.yml             # Conda environment
 └── README.md                   # This file
 ```
@@ -273,13 +317,18 @@ into a cache outside the working tree, so `examples/` runs from a cold clone.
 
 | Document | Description |
 |----------|-------------|
-| **[Examples](examples/README.md)** | The eight executed notebooks, their datasets and their runtimes |
+| **[Documentation site](documentation/index.md)** | Installation, concepts, task guides, API reference and research guidance |
+| **[Examples](examples/README.md)** | The ten executed notebooks, their datasets and their runtimes |
 | **[Settings reference](config/settings.yaml)** | Machine-readable defaults and parity/production profiles |
-| Docstrings | Every public function documents its parameters, boundary behaviour and numerical choices |
+| **[API reference](documentation/api/core.md)** | Generated from every public function and evaluator docstring |
 
-The changelog and the methodology, API, data-cleaning, parity and audit
-write-ups are maintained separately and are not distributed with the package.
-Contact the authors if you need them for review.
+Build or serve the complete documentation from the repository root:
+
+```bash
+pip install -e ".[docs]"
+mkdocs serve               # local site at http://127.0.0.1:8000
+mkdocs build --strict      # production build under site/
+```
 
 ### Scientific notes worth knowing before you interpret output
 
@@ -291,10 +340,11 @@ Contact the authors if you need them for review.
   ablation matrix is therefore neither symmetric nor antisymmetric. The
   multiclass **pairwise** matrix is a different construction and *is* symmetric:
   there the two cells swap labels rather than swapping basic and enhanced.
-- **Likelihoods below 0.5 have no equivalent coin.** `get_w` returns `NaN` there
-  and warns; `information_deficit(a)` reports `log(2a)` nats instead. A
-  below-chance likelihood is evidence of miscalibration, since every calibrated
-  predictor scores at least 0.5.
+- **Likelihoods below 0.5 have no exact equivalent coin.** `get_w` returns the
+  0.5 boundary for a small documented finite-sample residual; further below it
+  returns `NaN` and warns. `information_deficit(a)` reports `log(2a)` nats
+  throughout. A below-chance likelihood is evidence of miscalibration, since
+  every calibrated predictor scores at least 0.5 in expectation.
 - **SHAP-IMV is not ordinary SHAP.** It is a global attribution of held-out
   information, not a local prediction attribution. A negative value means the
   feature *reduced* out-of-fold information — it does **not** mean the feature
@@ -316,10 +366,16 @@ e0316491. [https://doi.org/10.1371/journal.pone.0316491](https://doi.org/10.1371
 
 ## Example analyses
 
-Eight executed notebooks live under `examples/`. Every one runs from a cold
+Ten executed notebooks live under `examples/`. Every one runs from a cold
 clone: nothing is read from the repository, and each notebook downloads what it
-needs into a cache outside the working tree. All of them use five seeds (42–46)
-and compare logistic regression, XGBoost and LightGBM.
+needs into a cache outside the working tree. Every tabular estimator and every
+ablation architecture is run under five seeds (42–46); the tabular examples
+compare logistic regression, XGBoost and LightGBM, while the ablation examples
+compare deep-learning architectures.
+
+The notebooks import this checkout's package directly. Each has an executable
+provenance guard that verifies `imv.__file__` resolves to `src/imv`, and the
+repository runtime installs the project in editable mode via `requirements.txt`.
 
 These are **our own runs, not replications of the published figures.** Of the
 datasets in the published work, only Adult Income, Nursery and IMDb have
@@ -350,24 +406,33 @@ Feature counts are capped deliberately: exact SHAP-IMV costs
 | Notebook | What it ablates | Source |
 |---|---|---|
 | `ablation_imv_imdb.ipynb` | DistilBERT layers, attention, FFN, layer norm | HF `stanfordnlp/imdb` |
+| `ablation_imv_mnist.ipynb` | CNN convolution, hidden layer, dropout, complete feature extractor | OpenML `mnist_784` v1 |
+| `ablation_imv_har.ipynb` | bidirectionality, recurrent depth, temporal attention, temporal order | UCI HAR id 240 |
 
-The IMDb notebook is roughly two hours for 25 fine-tuning runs, and is
-restartable: any variant whose predictions already exist on disk is reused.
+All three notebooks run 25 restartable fits: any variant whose predictions
+already exist on disk and pass its alignment checks is reused. IMDb is roughly
+two hours on the accelerated reference machine and can take several hours on
+CPU alone; MNIST uses the canonical 60,000/10,000 split and one epoch per fit;
+HAR preserves UCI's subject-disjoint split and uses 15 epochs per fit.
 
-Figures and aggregated CSV results are committed beside each notebook as
-reproduction evidence. See [examples/README.md](examples/README.md) for runtimes
-and conventions.
+Figures and result tables are embedded in the executed notebooks. Downloaded
+datasets, restart predictions, and optional file exports stay outside the
+repository under `~/.cache/imv`. See [examples/README.md](examples/README.md) for
+runtimes and conventions.
+
+Every notebook figure is also exported to the external artifact cache in three
+publication-ready forms: PNG at 800 DPI, PDF, and SVG. The shared
+`imv.utils.save_figure` helper enforces this consistently.
 
 ### Running Examples
 
 ```bash
-pip install -e ".[examples]"                # tabular notebooks
-pip install -e ".[examples-deep-learning]"  # plus the IMDb ablation
+pip install -r requirements.txt             # all ten notebooks
 jupyter lab examples/
 ```
 
-Launch each notebook with its own directory as the working directory; `results/`
-and `figures/` are written beside it.
+The notebooks may be launched from their own directories without modifying the
+checkout; all caches and optional exports are written under `~/.cache/imv`.
 
 ---
 
@@ -399,15 +464,33 @@ values in machine-readable form and is held to the Python signatures by
 ### Core functions
 
 ```python
-from imv import ll, get_w, calculate_imv, information_deficit
+from imv import (
+    calculate_imv,
+    get_w,
+    imv_from_likelihoods,
+    information_deficit,
+    ll,
+    vanilla_imv,
+)
 
 ll(x, p, epsilon=1e-9)                       # geometric mean Bernoulli likelihood
 get_w(a, guess=0.5, bounds=[(0.5, 1 - 1e-12)], tolerance=1e-9,
       chance_tolerance_nats=0.5, method="brentq")
-calculate_imv(y_basic, y_enhanced, y, epsilon=1e-9, tolerance=1e-9,
+calculate_imv(y_basic, y_enhanced, y=None, epsilon=1e-9, tolerance=1e-9,
               method="brentq")
+vanilla_imv(baseline, enhanced, outcomes=None, epsilon=1e-9, tolerance=1e-9,
+            method="brentq")
+imv_from_likelihoods(likelihood_basic, likelihood_enhanced,
+                     tolerance=1e-9, method="brentq")
 information_deficit(a)                       # log(2a) nats; defined below chance
 ```
+
+In three-argument mode, `calculate_imv` and `vanilla_imv` accept one-dimensional
+NumPy arrays, pandas `Series`, lists or tuples. Python and NumPy numeric scalars
+are valid constant predictions and are broadcast to the outcome length; scalar
+outcomes represent a one-observation dataset. In two-argument mode, both inputs
+are scalar geometric mean likelihoods in `(0, 1]`. A length-one vector is never
+broadcast implicitly.
 
 `method="brentq"` brackets the root of `g(w) - log(a)` and cannot stall.
 `method="lbfgsb"` reproduces pre-1.2.0 published numbers; pair it with
@@ -491,8 +574,9 @@ ablator = AblationIMV(random_seed: int = 42)   # CUDA > MPS > CPU, auto-detected
 - `reduce_bert_layers(model, num_layers_to_keep)`: truncates **in place**
 
 `calculate_imv_matrix`, `average_imv_matrices` and `reduce_bert_layers` are
-static. Only constructing `AblationIMV` and training need PyTorch, so scoring
-saved prediction frames works without the `deep-learning` extra.
+static. Matrix calculation and averaging work without PyTorch or an
+`AblationIMV` instance; construction, training, seeding and BERT layer reduction
+need the `deep-learning` extra.
 
 ---
 
@@ -554,10 +638,11 @@ pip install -e ".[dev]"
 ```
 
 ### `BelowChanceLikelihoodWarning` and `NaN` results
-A geometric mean likelihood below 0.5 has no equivalent coin weight, so `get_w`
-returns `NaN`. This is a certificate of miscalibration, not of weak
-discrimination: recalibrate the probabilities on held-out data, and use
-`information_deficit(a)` to report how far below chance the predictions fall.
+A geometric mean likelihood below 0.5 has no exact equivalent coin weight.
+`get_w` uses the boundary only within its documented finite-sample tolerance;
+further below it returns `NaN` and warns. This diagnoses miscalibration rather
+than weak discrimination: recalibrate on data separate from the scored holdout,
+and use `information_deficit(a)` to report the shortfall.
 
 ### `IncompleteCoalitionWarning`
 `calculate_imvshapley_value` needs all `2**n_features` coalitions. Missing ones

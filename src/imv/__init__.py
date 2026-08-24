@@ -14,6 +14,7 @@ Core Functions:
 - ll(): Log-likelihood geometric mean
 - get_w(): Information weight calculation
 - calculate_imv(): IMV score computation
+- vanilla_imv(): Discoverable entry point for the original binary IMV
 
 Example Usage:
     >>> from imv import BinaryIMV
@@ -28,9 +29,11 @@ from .utils.core import (
     BelowChanceLikelihoodWarning,
     calculate_imv,
     get_w,
+    imv_from_likelihoods,
     imv_from_probs,
     information_deficit,
     ll,
+    vanilla_imv,
 )
 
 __version__ = "1.2.0"
@@ -40,7 +43,9 @@ __all__ = [
     "ll",
     "get_w",
     "calculate_imv",
+    "vanilla_imv",
     "imv_from_probs",
+    "imv_from_likelihoods",
     "information_deficit",
     "BelowChanceLikelihoodWarning",
     "IncompleteCoalitionWarning",

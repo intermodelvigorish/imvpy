@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import pytest
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.network]
 
 import os
 import sys
@@ -30,13 +30,19 @@ from imv import (  # Updated import for reorganized package structure
     get_w,
     ll,
 )
+from imv.utils import save_figure
 
-# Directories for test data and figures (saved inside the tests/ folder)
+# Dataset caches are always external to the checkout. Test figures are disposable
+# and remain ignored under tests/.
 TEST_DIR = os.path.dirname(__file__)
-DATA_DIR = os.path.join(TEST_DIR, 'data')
+CACHE_HOME = os.environ.get(
+    'IMV_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache', 'imv')
+)
+DATA_DIR = os.path.join(
+    os.environ.get('IMV_DATA_CACHE', os.path.join(CACHE_HOME, 'datasets')),
+    'adult_income',
+)
 FIGURES_DIR = os.path.join(TEST_DIR, 'figures')
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(FIGURES_DIR, exist_ok=True)
 
 
 def load_and_prepare_adult_income_data():
@@ -44,7 +50,8 @@ def load_and_prepare_adult_income_data():
     Load and prepare the Adult Income dataset
     Replicates the data preparation from the notebook
     """
-    # Save/load processed dataset inside tests/data for reproducibility and offline runs
+    # Reuse the dynamically fetched data without ever writing it into the repository.
+    os.makedirs(DATA_DIR, exist_ok=True)
     data_file = os.path.join(DATA_DIR, 'adult_income_processed.csv')
 
     # If user has already downloaded and processed the dataset, load it
@@ -170,10 +177,11 @@ def test_shap_imv_basic():
     # Create visualization
     print("\nCreating SHAP-IMV visualization...")
     try:
+        os.makedirs(FIGURES_DIR, exist_ok=True)
         fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 4))
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_basic.png')
-        plt.savefig(out_path, dpi=150, bbox_inches='tight')
+        save_figure(fig, out_path)
         print(f"✓ Visualization saved to: {out_path}")
         plt.close()
     except Exception as e:
@@ -239,11 +247,12 @@ def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
     # Create visualizations
     print("\nCreating visualizations...")
     try:
+        os.makedirs(FIGURES_DIR, exist_ok=True)
         # SHAP-IMV bar plot
         fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 6))
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_full.png')
-        plt.savefig(out_path, dpi=150, bbox_inches='tight')
+        save_figure(fig, out_path)
         print(f"✓ SHAP-IMV visualization saved to: {out_path}")
         plt.close()
 
@@ -252,7 +261,7 @@ def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
         evaluator.plot_single_var_combinations_layered_violin_centralized_zero(ax=ax)
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_single_var_violin.png')
-        plt.savefig(out_path, dpi=150, bbox_inches='tight')
+        save_figure(fig, out_path)
         print(f"✓ Single variable violin plot saved to: {out_path}")
         plt.close()
     except Exception as e:

@@ -1,0 +1,4 @@
+# Complete runtime for every notebook under examples/.
+# The editable install is intentional: notebooks must import this checkout's
+# src/imv directly. Dependency versions remain centralized in pyproject.toml.
+-e .[examples-deep-learning]

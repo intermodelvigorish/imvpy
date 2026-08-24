@@ -26,6 +26,7 @@ from sklearn.linear_model import LogisticRegression
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from imv import MulticlassIMV
+from imv.utils import save_figure
 
 
 def load_and_prepare_nursery_data():
@@ -162,7 +163,7 @@ def test_multi_imv_one_vs_all():
     try:
         fig, ax = evaluator.multinomial_IMV_boxplot(imv_results, figsize=(8, 6))
         plt.tight_layout()
-        plt.savefig(os.path.join(FIGURES_DIR, 'test_multi_imv_boxplot.png'), dpi=150, bbox_inches='tight')
+        save_figure(fig, os.path.join(FIGURES_DIR, 'test_multi_imv_boxplot'))
         print("✓ Boxplot saved to: test_multi_imv_boxplot.png")
         plt.close()
     except Exception as e:
@@ -216,7 +217,7 @@ def test_multi_imv_confusion_matrix():
     try:
         fig, ax = evaluator.multinomial_IMV_heatmap(imv_matrix_average, figsize=(8, 8))
         plt.tight_layout()
-        plt.savefig(os.path.join(FIGURES_DIR, 'test_multi_imv_heatmap.png'), dpi=150, bbox_inches='tight')
+        save_figure(fig, os.path.join(FIGURES_DIR, 'test_multi_imv_heatmap'))
         print("✓ Heatmap saved to: test_multi_imv_heatmap.png")
         plt.close()
     except Exception as e:

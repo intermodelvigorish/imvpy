@@ -42,6 +42,7 @@ except ImportError as e:
     DEPENDENCIES_AVAILABLE = False
 
 from imv import AblationIMV  # Updated import for reorganized package structure
+from imv.utils import save_figure
 
 pytestmark = [
     pytest.mark.slow,
@@ -321,7 +322,7 @@ def test_imv_matrix_calculation():
                    center=0, ax=ax)
         ax.set_title('Ablation IMV Matrix\n(row model vs column model)')
         plt.tight_layout()
-        plt.savefig(os.path.join(FIGURES_DIR, 'test_ablation_imv_matrix.png'), dpi=150, bbox_inches='tight')
+        save_figure(fig, os.path.join(FIGURES_DIR, 'test_ablation_imv_matrix'))
         print("✓ Heatmap saved to: test_ablation_imv_matrix.png")
         plt.close()
     except Exception as e:
