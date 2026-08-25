@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+site_name: IMV
+site_description: InterModel Vigorish for probabilistic model comparison and attribution
+site_url: https://intermodelvigorish.github.io/imv_ml_package/
+repo_url: https://github.com/intermodelvigorish/imv_ml_package
+repo_name: intermodelvigorish/imv_ml_package
+edit_uri: edit/main/documentation/
+docs_dir: documentation
+site_dir: site
+strict: true
+
+theme:
+  name: material
+  language: en
+  features:
+    - content.code.copy
+    - content.action.edit
+    - navigation.footer
+    - navigation.indexes
+    - navigation.path
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+  palette:
+    primary: teal
+    accent: orange
+
+nav:
+  - Home: index.md
+  - Get Started:
+      - Installation: getting-started/installation.md
+      - First IMV: getting-started/first-imv.md
+      - Choose a Workflow: getting-started/choose-workflow.md
+  - Concepts:
+      - Metric Definition: concepts/metric.md
+      - Interpretation: concepts/interpretation.md
+      - Statistical Practice: concepts/statistical-practice.md
+  - Guides:
+      - Vanilla IMV: guides/vanilla.md
+      - Exact SHAP-IMV: guides/shap.md
+      - Multiclass IMV: guides/multiclass.md
+      - Model Ablation: guides/ablation.md
+      - Plotting and Export: guides/plotting.md
+  - Examples:
+      - Overview: examples/index.md
+      - SHAP-IMV:
+          - Adult Income: examples/shap_imv/adult_income.md
+          - Titanic: examples/shap_imv/titanic.md
+          - Breast Cancer: examples/shap_imv/breast_cancer.md
+          - Wine Quality: examples/shap_imv/wine_quality.md
+      - Multiclass:
+          - Nursery: examples/multi_imv/nursery.md
+          - Car Evaluation: examples/multi_imv/car_evaluation.md
+          - Dry Bean: examples/multi_imv/dry_bean.md
+      - Ablation:
+          - IMDb: examples/ablation_imv/imdb.md
+          - MNIST: examples/ablation_imv/mnist.md
+          - Human Activity Recognition: examples/ablation_imv/har.md
+  - API Reference:
+      - Core: api/core.md
+      - Binary and SHAP-IMV: api/binary.md
+      - Multiclass: api/multiclass.md
+      - Ablation: api/ablation.md
+      - Plotting: api/plotting.md
+  - Reference:
+      - Configuration: reference/configuration.md
+      - Reproducibility: reference/reproducibility.md
+      - Compatibility: reference/compatibility.md
+      - Troubleshooting: reference/troubleshooting.md
+  - Development:
+      - Contributing: contributing.md
+      - Citation and License: citation.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: auto
+            docstring_options:
+              default: google
+              per_style_options:
+                google:
+                  returns_multiple_items: false
+                  returns_named_value: false
+                numpy: {}
+            docstring_section_style: list
+            members_order: source
+            separate_signature: true
+            show_root_heading: true
+            show_signature_annotations: true
+            show_source: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - toc:
+      permalink: true

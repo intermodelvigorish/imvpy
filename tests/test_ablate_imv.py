@@ -7,14 +7,22 @@ NOTE: This test requires PyTorch and transformers library.
 """
 
 import warnings
-warnings.filterwarnings("ignore")
 
-import sys
+warnings.filterwarnings("ignore")
 import os
+import sys
+
+import pytest
+
+# Figures belong beside the tests, never in whatever directory pytest was
+# launched from.
+FIGURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'figures')
+os.makedirs(FIGURES_DIR, exist_ok=True)
 import re
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Add parent directory to path
@@ -22,22 +30,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 try:
     import torch
-    from transformers import (
-        DistilBertForSequenceClassification, 
-        AutoTokenizer,  
-        get_scheduler
-    )
+    from datasets import load_dataset
     from torch.optim import AdamW
     from torch.utils.data import DataLoader
-    from datasets import load_dataset
+    from transformers import AutoTokenizer, DistilBertForSequenceClassification, get_scheduler
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
-    print(f"ERROR: Missing dependencies for ablation IMV tests")
-    print(f"Please install: pip install torch transformers datasets")
+    print("ERROR: Missing dependencies for ablation IMV tests")
+    print("Please install: pip install torch transformers datasets")
     print(f"Import error: {e}")
     DEPENDENCIES_AVAILABLE = False
 
 from imv import AblationIMV  # Updated import for reorganized package structure
+from imv.utils import save_figure
+
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.deep_learning,
+    pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="deep-learning extras not installed"),
+]
 
 
 def check_dependencies():
@@ -152,8 +163,8 @@ def test_device_detection():
     if hasattr(torch.backends, 'mps'):
         print(f"  MPS (Apple Silicon): {torch.backends.mps.is_available()}")
     else:
-        print(f"  MPS (Apple Silicon): False (PyTorch version too old)")
-    print(f"  CPU: True (always available)")
+        print("  MPS (Apple Silicon): False (PyTorch version too old)")
+    print("  CPU: True (always available)")
     
     if evaluator.device.type == "cuda":
         print(f"\n✓ Using NVIDIA GPU: {torch.cuda.get_device_name(0)}")
@@ -255,7 +266,7 @@ def test_small_training_run(quick=True):
         verbose=True
     )
     
-    print(f"\n✓ Training completed successfully!")
+    print("\n✓ Training completed successfully!")
     print(f"  Test accuracy: {results['test_accuracy']:.4f}")
     print(f"  Predictions shape: {results['test_predictions'].shape}")
 
@@ -311,7 +322,7 @@ def test_imv_matrix_calculation():
                    center=0, ax=ax)
         ax.set_title('Ablation IMV Matrix\n(row model vs column model)')
         plt.tight_layout()
-        plt.savefig('test_ablation_imv_matrix.png', dpi=150, bbox_inches='tight')
+        save_figure(fig, os.path.join(FIGURES_DIR, 'test_ablation_imv_matrix'))
         print("✓ Heatmap saved to: test_ablation_imv_matrix.png")
         plt.close()
     except Exception as e:

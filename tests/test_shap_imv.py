@@ -4,28 +4,55 @@ Replicates the Adult Income dataset example from SHAP_IMV_AdultIncome (2).ipynb
 """
 
 import warnings
-warnings.filterwarnings("ignore")
 
-import sys
+warnings.filterwarnings("ignore")
+import pytest
+
+pytestmark = [pytest.mark.slow, pytest.mark.network]
+
 import os
+import sys
+import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
-import matplotlib.pyplot as plt
-import warnings
+
 warnings.filterwarnings("ignore")
 # Add parent directory to path to import the package
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from imv import BinaryIMV, ll, get_w, calculate_imv  # Updated import for reorganized package structure
+from imv import (  # Updated import for reorganized package structure
+    BinaryIMV,
+    calculate_imv,
+    get_w,
+    ll,
+)
+from imv.utils import save_figure
 
-# Directories for test data and figures (saved inside the tests/ folder)
+# Dataset caches are always external to the checkout. Test figures are disposable
+# and remain ignored under tests/.
 TEST_DIR = os.path.dirname(__file__)
-DATA_DIR = os.path.join(TEST_DIR, 'data')
+CACHE_HOME = os.environ.get(
+    'IMV_CACHE_HOME', os.path.join(os.path.expanduser('~'), '.cache', 'imv')
+)
+DATA_DIR = os.path.join(
+    os.environ.get('IMV_DATA_CACHE', os.path.join(CACHE_HOME, 'datasets')),
+    'adult_income',
+)
 FIGURES_DIR = os.path.join(TEST_DIR, 'figures')
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(FIGURES_DIR, exist_ok=True)
+
+
+def relative_path(path):
+    """Format paths relative to the test invocation directory for portable logs."""
+    return os.path.relpath(os.path.abspath(path), start=os.getcwd())
+
+
+def relative_error(error, path):
+    """Remove a known absolute path from an exception before logging it."""
+    return str(error).replace(os.path.abspath(path), relative_path(path))
 
 
 def load_and_prepare_adult_income_data():
@@ -33,17 +60,21 @@ def load_and_prepare_adult_income_data():
     Load and prepare the Adult Income dataset
     Replicates the data preparation from the notebook
     """
-    # Save/load processed dataset inside tests/data for reproducibility and offline runs
+    # Reuse the dynamically fetched data without ever writing it into the repository.
+    os.makedirs(DATA_DIR, exist_ok=True)
     data_file = os.path.join(DATA_DIR, 'adult_income_processed.csv')
 
     # If user has already downloaded and processed the dataset, load it
     if os.path.exists(data_file):
         try:
             df_combined = pd.read_csv(data_file)
-            print(f"Loaded processed dataset from: {data_file}")
+            print(f"Loaded processed dataset from: {relative_path(data_file)}")
             return df_combined
         except Exception as e:
-            print(f"Warning: failed to read cached dataset ({data_file}): {e}")
+            print(
+                "Warning: failed to read cached dataset "
+                f"({relative_path(data_file)}): {relative_error(e, data_file)}"
+            )
 
     try:
         from ucimlrepo import fetch_ucirepo
@@ -83,9 +114,12 @@ def load_and_prepare_adult_income_data():
         # Save processed dataset for future test runs
         try:
             df_combined.to_csv(data_file, index=False)
-            print(f"Saved processed dataset to: {data_file}")
+            print(f"Saved processed dataset to: {relative_path(data_file)}")
         except Exception as e:
-            print(f"Warning: could not save processed dataset to {data_file}: {e}")
+            print(
+                "Warning: could not save processed dataset to "
+                f"{relative_path(data_file)}: {relative_error(e, data_file)}"
+            )
 
         return df_combined
 
@@ -159,11 +193,12 @@ def test_shap_imv_basic():
     # Create visualization
     print("\nCreating SHAP-IMV visualization...")
     try:
+        os.makedirs(FIGURES_DIR, exist_ok=True)
         fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 4))
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_basic.png')
-        plt.savefig(out_path, dpi=150, bbox_inches='tight')
-        print(f"✓ Visualization saved to: {out_path}")
+        save_figure(fig, out_path)
+        print(f"✓ Visualization saved to: {relative_path(out_path)}")
         plt.close()
     except Exception as e:
         print(f"Warning: Could not create visualization: {e}")
@@ -228,12 +263,13 @@ def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
     # Create visualizations
     print("\nCreating visualizations...")
     try:
+        os.makedirs(FIGURES_DIR, exist_ok=True)
         # SHAP-IMV bar plot
         fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 6))
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_full.png')
-        plt.savefig(out_path, dpi=150, bbox_inches='tight')
-        print(f"✓ SHAP-IMV visualization saved to: {out_path}")
+        save_figure(fig, out_path)
+        print(f"✓ SHAP-IMV visualization saved to: {relative_path(out_path)}")
         plt.close()
 
         # Single variable violin plot
@@ -241,8 +277,8 @@ def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
         evaluator.plot_single_var_combinations_layered_violin_centralized_zero(ax=ax)
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_single_var_violin.png')
-        plt.savefig(out_path, dpi=150, bbox_inches='tight')
-        print(f"✓ Single variable violin plot saved to: {out_path}")
+        save_figure(fig, out_path)
+        print(f"✓ Single variable violin plot saved to: {relative_path(out_path)}")
         plt.close()
     except Exception as e:
         print(f"Warning: Could not create visualization: {e}")

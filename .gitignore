@@ -1,35 +1,86 @@
-SHAP_IMV_AdultIncome (2).ipynb
-
-# Python cache
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*.so
 .Python
 
-# Virtual environments
+# Build and packaging artifacts
+build/
+dist/
+sdist/
+wheels/
+*.egg-info/
+.eggs/
+
+# ---------------------------------------------------------------------------
+# Environments
+# ---------------------------------------------------------------------------
 venv/
+.venv/
 env/
 ENV/
 
-# IDE
+# ---------------------------------------------------------------------------
+# Editors and operating systems
+# ---------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
 .DS_Store
 Thumbs.db
 
-# Testing
+# Agent/editor scratch settings are developer-local.
+.claude/
+
+# ---------------------------------------------------------------------------
+# Testing, coverage and linting caches
+# ---------------------------------------------------------------------------
 .pytest_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
 
-# Generated files
-*.png
-*.pdf
+# Figures produced by the test suite are regenerated on every run.
+tests/figures/
+
+# ---------------------------------------------------------------------------
+# Local-only working directories
+# ---------------------------------------------------------------------------
+# Superseded pre-reorganisation material, kept on disk for reference only.
+/archive/
+# Generated MkDocs output; the Markdown sources under documentation/ are tracked.
+/site/
+# Trained weights and ad-hoc prediction dumps are far too large to version.
 models/
 saved_predictions/
-/archive
+
+# ---------------------------------------------------------------------------
+# Generated figures and notebook artifacts
+# ---------------------------------------------------------------------------
+# Rendered output is embedded in the executed notebooks. Separate exports are
+# local byproducts and never belong in the repository.
+*.png
+*.pdf
+*.svg
+examples/**/figures/
+examples/**/results/
+
+# ---------------------------------------------------------------------------
+# Data and raw model output
+# ---------------------------------------------------------------------------
+# No dataset belongs in this repository. Every example downloads what it needs
+# into a cache outside the working tree, so a cold clone can run them all.
+# Common dataset directories are ignored globally as a second line of defence;
+# the repository-contract test independently rejects data-file extensions.
+**/data/
+**/dataset/
+**/datasets/
+**/downloads/
+**/raw/

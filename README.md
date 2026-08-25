@@ -1,12 +1,12 @@
-# IMV: Information Model Vigor
+# IMV: InterModel Vigorish
 
 <div align="center">
 
-*A unified framework for measuring information content and feature importance in machine learning models*
+*A Python implementation of the InterModel Vigorish for comparing probabilistic predictions*
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 
 </div>
 
@@ -14,13 +14,17 @@
 
 ## Overview
 
-**IMV (Information Model Vigor)** is a model-agnostic framework for quantifying how much information a model captures about its predictions. Unlike traditional metrics that focus on accuracy or error rates, IMV measures the **information content** using principles from information theory and game theory.
+**IMV (InterModel Vigorish)** is a model-agnostic metric for quantifying the change in predictive accuracy between a baseline and an enhanced probabilistic prediction system. It translates each system’s mean log-likelihood into the equivalent weight of a weighted coin, then expresses the enhanced system’s advantage as the house edge—or “vigorish”—of a fair bet priced from the baseline system.
+
+The canonical method is defined for binary outcomes and probability predictions. IMV is always relative to a baseline (which may be prevalence alone), is directional, and is intended to be evaluated on held-out or out-of-sample predictions. It is not mutual information, entropy, accuracy, or a calibrated probability.
 
 ### Key Features
 
-**Three Powerful Modules:**
-- **Binary IMV**: Binary classification with SHAP value attribution
-- **Multi-class IMV**: Multi-class problems (3+ classes) with confusion matrix analysis
+**Canonical metric and three extensions:**
+- **Vanilla IMV**: Direct comparison from outcomes and probabilities, or from
+  two geometric mean likelihoods
+- **Binary IMV**: Binary classification with exact IMV-Shapley feature attribution
+- **Multi-class IMV**: An extension using one-vs-rest and pairwise comparisons
 - **Ablation IMV**: Deep learning ablation studies with GPU support
 
 **Performance:**
@@ -33,7 +37,7 @@
 - Performance comparison plots
 - IMV distribution analysis
 
-**Research-Grade:**
+**Research-oriented:**
 - Reproducible results with seed management
 - K-fold cross-validation
 - Statistical stability across runs
@@ -42,43 +46,109 @@
 
 ## Installation
 
-### Basic Installation
+Requires Python 3.9 or newer.
+
+### Basic installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/intermodelvigorish/imv_ml_package.git
 cd imv_ml_package
+pip install .
+```
 
-# Install core dependencies
+This installs the `imv` package and its dependencies. Verify with:
+
+```bash
+python -c "import imv; print(imv.__version__)"
+```
+
+> The sources live under `src/`, so `import imv` only works after installing.
+> `pyproject.toml` remains the single source of dependency truth;
+> `requirements.txt` is a thin convenience entry point that installs the local
+> package with every dependency needed by all ten example notebooks.
+
+To install the complete notebook runtime from the repository root:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### Optional: Deep Learning Support
+### Optional extras
 
-For ablation studies with transformers:
+All extras are declared in `pyproject.toml` under
+`[project.optional-dependencies]`:
+
+| Extra | Installs | For |
+|---|---|---|
+| `progress` | `tqdm-joblib` | nicer progress bars during coalition fitting |
+| `deep-learning` | PyTorch | `AblationIMV` construction, seeding, training, and BERT layer reduction |
+| `notebooks` | Jupyter, nbclient, nbformat | running any notebook |
+| `examples` | `notebooks` + `ucimlrepo`, XGBoost, LightGBM | the seven tabular examples |
+| `examples-deep-learning` | `examples` + `deep-learning` + transformers, datasets | the IMDb, MNIST and HAR ablation examples |
+| `test` | pytest, pytest-cov, pyyaml, nbformat | the test suite |
+| `docs` | MkDocs Material + mkdocstrings | building or serving the documentation |
+| `dev` | `progress` + `notebooks` + `test` + `docs` + build, ruff, mypy | developing the library |
 
 ```bash
-# GPU support (CUDA or Apple Silicon MPS)
-pip install torch>=1.12.0 transformers>=4.20.0 datasets>=2.0.0
-
-# Note: PyTorch 1.12+ required for Apple Silicon MPS support
+pip install ".[examples]"    # e.g. to run the tabular notebooks
+pip install -e ".[dev]"      # e.g. to work on the library
 ```
 
-### Development Installation
+`AblationIMV` selects CUDA, then Apple Silicon MPS, then CPU automatically; no
+platform-specific configuration is needed. Static matrix calculation and
+averaging from saved predictions need no PyTorch or evaluator instance.
+
+### Development installation
 
 ```bash
-# Install in editable mode
-pip install -e .
-
-# Install with dev dependencies
 pip install -e ".[dev]"
+pytest                        # fast suite (the merge gate)
+pytest -m ""                  # include slow and deep-learning tests
+ruff check .                  # lint, configured in pyproject.toml
+```
+
+### Conda
+
+```bash
+conda env create -f environment.yml
+conda activate imv
 ```
 
 ---
 
 ## Quick Start
 
-### 1. Binary IMV: Binary Classification
+### 1. Vanilla IMV
+
+The original PLOS supplementary example uses a scalar baseline probability and
+an observation-level enhanced prediction. Scalars are broadcast; NumPy arrays,
+pandas `Series`, lists and tuples are accepted positionally:
+
+```python
+import numpy as np
+from imv import ll, vanilla_imv
+
+observed = np.array([
+    0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+])
+enhanced = np.repeat([0.5, 0.9], 20)
+
+vanilla_imv(0.55, enhanced, observed)
+# 0.23722913125143966
+
+# The same Eq. 6 calculation from already-aggregated Eq. 2 likelihoods:
+vanilla_imv(ll(observed, 0.55), ll(observed, enhanced))
+# 0.23722913125143966
+```
+
+The argument order is always baseline, enhanced, then observed outcomes. In the
+two-argument form, both values must instead be scalar geometric mean
+likelihoods. Use `imv_from_likelihoods(a0, a1)` when you want to make that mode
+explicit. Use held-out probabilities for model comparison; in-sample values
+favor the more complex model.
+
+### 2. Binary IMV: Binary Classification
 
 Compute IMV-based feature importance for binary classification:
 
@@ -100,25 +170,33 @@ evaluator = BinaryIMV(
     n_splits=5,
     prop_test=0.2,
     model_type='classification',
-    random_seed=42
+    random_seed=42,
+    verbose=True,          # progress bar and per-variable values; default False
 )
 
-# Run evaluation
+# Trains a model per feature subset per fold: 2**n_features * n_splits * 2 fits
 evaluator.run_evaluation()
 
-# Visualize results
+# Per-feature attribution, plus a plot
+for feature in ['age', 'education_years', 'hours_per_week']:
+    print(feature, evaluator.calculate_imvshapley_value(feature))
+
 fig, ax = evaluator.evaluate_imvshapley(figsize=(12, 4))
 ```
 
-**Output:**
+**Output** (values depend on your data; `verbose=True` is required for the first line):
 ```
 Best explanatory variables' combination: ('age', 'education_years'), IMV: 0.234
-SHAP-IMV value for variable age: 0.145
-SHAP-IMV value for variable education_years: 0.112
-SHAP-IMV value for variable hours_per_week: 0.068
+age 0.145
+education_years 0.112
+hours_per_week 0.068
 ```
 
-### 2. Multi-class IMV: Multi-class Classification
+The returned values are rounded to 3 decimals. Before rounding, they sum to the
+full-coalition value minus the empty-coalition value; rounding can leave a small
+residual. A negative value means the feature *reduced* out-of-fold information.
+
+### 3. Multi-class IMV: Multi-class Classification
 
 Analyze multi-class classification problems:
 
@@ -141,19 +219,22 @@ evaluator = MulticlassIMV(
 )
 
 # Calculate IMV confusion matrix
-imv_matrix = evaluator.calculate_imv_matrix()
+_, imv_matrix = evaluator.k_fold_imv_matrix()
 print(imv_matrix)
 
 # Visualize
-fig, ax = evaluator.plot_imv_heatmap(imv_matrix, figsize=(8, 8))
+fig, ax = evaluator.multinomial_IMV_heatmap(imv_matrix, figsize=(6, 6))
 ```
 
 **Interpretation:**
 - Diagonal values are always 0 (a class compared to itself)
-- Off-diagonal values show information gain when predicting one class vs another
+- Off-diagonal values show information gain when separating one class from another
 - Higher values indicate better class separation
+- This matrix is **symmetric by construction**: `ll` is invariant under
+  `(y, p) -> (1-y, 1-p)`, and pairwise renormalisation gives `p_j = 1 - p_i`.
+  Do not read it like the directional ablation matrix below.
 
-### 3. Ablation IMV: Deep Learning
+### 4. Ablation IMV: Deep Learning
 
 Quantify the importance of model components in deep learning:
 
@@ -166,16 +247,23 @@ from imv import AblationIMV
 ablator = AblationIMV(random_seed=42)
 # Output: Using device: Apple Silicon GPU (MPS)
 
-# Create model variants with different layer counts
-model_6layer = DistilBertForSequenceClassification.from_pretrained(
-    "distilbert-base-uncased", num_labels=2
-)
-model_4layer = ablator.reduce_bert_layers(model_6layer, num_layers_to_keep=4)
-model_2layer = ablator.reduce_bert_layers(model_6layer, num_layers_to_keep=2)
+def fresh_model():
+    return DistilBertForSequenceClassification.from_pretrained(
+        "distilbert-base-uncased", num_labels=2
+    )
 
-# Train each variant and compare
+# reduce_bert_layers modifies the model IN PLACE, so build each variant from a
+# freshly loaded checkpoint. Reusing one object would leave every variant
+# pointing at the same, most-truncated model.
+variants = {
+    '6-layer': fresh_model(),
+    '4-layer': ablator.reduce_bert_layers(fresh_model(), num_layers_to_keep=4),
+    '2-layer': ablator.reduce_bert_layers(fresh_model(), num_layers_to_keep=2),
+}
+
+# Train each variant and collect its held-out predictions
 results = {}
-for name, model in [('6-layer', model_6layer), ('4-layer', model_4layer), ('2-layer', model_2layer)]:
+for name, model in variants.items():
     result = ablator.train_and_evaluate(
         model=model,
         train_dataloader=train_loader,
@@ -186,10 +274,14 @@ for name, model in [('6-layer', model_6layer), ('4-layer', model_4layer), ('2-la
     )
     results[name] = result['test_predictions']
 
-# Compute IMV matrix
+# Compute the directional IMV matrix (rows = enhanced, columns = basic)
 imv_matrix = ablator.calculate_imv_matrix(results)
 print(imv_matrix)
 ```
+
+Unlike the multiclass pairwise matrix, this one **is** directional: each cell
+uses a different baseline in the denominator, so values are not comparable
+across columns.
 
 ---
 
@@ -197,33 +289,27 @@ print(imv_matrix)
 
 ```
 imv_ml_package/
-├── imv/                        # Main package
-│   ├── __init__.py
-│   ├── core.py                 # Core IMV calculation
-│   ├── binary.py               # BinaryIMV class
-│   ├── multiclass.py           # MulticlassIMV class
-│   ├── ablation.py             # AblationIMV class
-│   └── utils.py                # Utility functions
-├── paper_examples/                   # Example scripts
-│   └── package_version/
-│       ├── shap_imv/          # Binary classification examples
-│       │   ├── shap_imv_titanic.py
-│       │   ├── shap_imv_breastcancer.py
-│       │   └── shap_imv_winequality.py
-│       └── multi_imv/         # Multi-class examples
-│           ├── multi_imv_nursery.py
-│           ├── multi_imv_car_evaluation.py
-│           ├── multi_imv_dry_bean.py
-│           └── create_combined_figure.py
-├── tests/                      # Test suite
-│   ├── test_ablate_imv.py
-│   ├── test_multi_imv.py
-│   └── test_shap_imv.py
-├── requirements.txt            # Dependencies
-├── requirements-dev.txt        # Dev dependencies
-├── setup.py                    # Package setup
+├── src/imv/                    # Installable package (src layout)
+│   ├── utils/                  # Shared metric and plotting utilities
+│   ├── shap_imv/               # Binary exact SHAP-IMV
+│   ├── multi_imv/              # Multiclass IMV
+│   └── ablation_imv/           # Ablation training and comparison
+├── examples/                   # Ten executed notebooks, each self-contained
+│   ├── shap_imv/               # Executed binary SHAP-IMV notebooks
+│   ├── multi_imv/              # Executed multiclass IMV notebooks
+│   └── ablation_imv/           # Executed model-ablation notebooks
+├── documentation/              # Complete MkDocs guides and API reference
+├── config/settings.yaml        # Documented defaults and reproducibility profiles
+├── tests/                      # Unit, integration and contract tests
+├── mkdocs.yml                  # Strict documentation build and navigation
+├── pyproject.toml              # Package metadata, dependencies, lint and test config
+├── requirements.txt            # One-command runtime for all example notebooks
+├── environment.yml             # Conda environment
 └── README.md                   # This file
 ```
+
+No dataset is stored in this repository. Every notebook downloads what it needs
+into a cache outside the working tree, so `examples/` runs from a cold clone.
 
 ---
 
@@ -231,97 +317,185 @@ imv_ml_package/
 
 | Document | Description |
 |----------|-------------|
-| **[TECHNICAL.md](docs/TECHNICAL.md)** | Technical documentation and algorithms |
-| **[Paper Examples](paper_examples/)** | Complete example scripts with real datasets to replicate paper results|
-| **[Tests README](tests/README.md)** | Testing guide and test descriptions |
+| **[Documentation site](documentation/index.md)** | Installation, concepts, task guides, API reference and research guidance |
+| **[Examples](examples/README.md)** | The ten executed notebooks, their datasets and their runtimes |
+| **[Settings reference](config/settings.yaml)** | Machine-readable defaults and parity/production profiles |
+| **[API reference](documentation/api/core.md)** | Generated from every public function and evaluator docstring |
+
+Build or serve the complete documentation from the repository root:
+
+```bash
+pip install -e ".[docs]"
+mkdocs serve               # local site at http://127.0.0.1:8000
+mkdocs build --strict      # production build under site/
+```
+
+### Scientific notes worth knowing before you interpret output
+
+- **IMV is a bounded likelihood transformation**, not mutual information, entropy
+  or a calibrated probability. Magnitudes depend on the baseline model, so values
+  computed against different baselines are not comparable.
+- **The metric is directional.** Reversing basic and enhanced changes the
+  denominator, so `IMV(B→E)` and `IMV(E→B)` are not negatives of each other. The
+  ablation matrix is therefore neither symmetric nor antisymmetric. The
+  multiclass **pairwise** matrix is a different construction and *is* symmetric:
+  there the two cells swap labels rather than swapping basic and enhanced.
+- **Likelihoods below 0.5 have no exact equivalent coin.** `get_w` returns the
+  0.5 boundary for a small documented finite-sample residual; further below it
+  returns `NaN` and warns. `information_deficit(a)` reports `log(2a)` nats
+  throughout. A below-chance likelihood is evidence of miscalibration, since
+  every calibrated predictor scores at least 0.5 in expectation.
+- **SHAP-IMV is not ordinary SHAP.** It is a global attribution of held-out
+  information, not a local prediction attribution. A negative value means the
+  feature *reduced* out-of-fold information — it does **not** mean the feature
+  indicates the negative class.
+- **Fold-to-fold spread is not a confidence interval.** Folds share training rows.
+- Report the split method, seed, baseline model, estimator, calibration procedure
+  and package version with any IMV result.
+
+### Citation
+
+This package is based on:
+
+Domingue BW, Rahal C, Faul J, Freese J, Kanopka K, Rigos A, et al. (2025).
+“The InterModel Vigorish (IMV) as a flexible and portable approach for
+quantifying predictive accuracy with binary outcomes.” *PLOS ONE*, 20(3),
+e0316491. [https://doi.org/10.1371/journal.pone.0316491](https://doi.org/10.1371/journal.pone.0316491)
 
 ---
 
-## Examples to replicate the paper results
+## Example analyses
 
-### Binary Classification Examples
+Ten executed notebooks live under `examples/`. Every one runs from a cold
+clone: nothing is read from the repository, and each notebook downloads what it
+needs into a cache outside the working tree. Every tabular estimator and every
+ablation architecture is run under ten seeds (42–51); the tabular examples
+compare logistic regression, XGBoost and LightGBM, while the ablation examples
+compare deep-learning architectures.
 
-The `examples/package_version/shap_imv/` directory contains:
+The notebooks import this checkout's package directly. Each has an executable
+provenance guard that verifies `imv.__file__` resolves to `src/imv`, and the
+repository runtime installs the project in editable mode via `requirements.txt`.
 
-1. **Titanic Dataset** (`shap_imv_titanic.py`)
-   - Binary survival prediction
-   - 7 features: Class, Sex, Age, Age×Class, Alone, Fare, Embarked
-   - Models: Logistic Regression, XGBoost, LightGBM
+These are **our own runs, not replications of the published figures.** Of the
+datasets in the published work, only Adult Income, Nursery and IMDb have
+generating code in the original research notebooks.
 
-2. **Breast Cancer Dataset** (`shap_imv_breastcancer.py`)
-   - Binary diagnosis (malignant/benign)
-   - 9 tumor characteristics
-   - Models: Logistic Regression, XGBoost, LightGBM
+### Binary — exact SHAP-IMV (`examples/shap_imv/`)
 
-3. **Wine Quality Dataset** (`shap_imv_winequality.py`)
-   - Binary quality classification (high/low)
-   - 11 chemical properties
-   - Models: Logistic Regression, XGBoost, LightGBM
+| Notebook | Outcome | Features | Source |
+|---|---|---|---|
+| `shap_imv_adult_income.ipynb` | income > 50K | 6 demographic / human-capital | UCI id 2 |
+| `shap_imv_titanic.ipynb` | survived | 6 incl. `Title` from the name field | OpenML `titanic` v1 |
+| `shap_imv_breast_cancer.ipynb` | malignant | 6 least-collinear "mean" measurements | UCI id 17 |
+| `shap_imv_wine_quality.ipynb` | `quality >= 6` | 6 chemical properties | UCI id 186 |
 
-### Multi-class Classification Examples
+Feature counts are capped deliberately: exact SHAP-IMV costs
+`2**n_features * n_splits * 2` fits per seed per estimator.
 
-The `examples/package_version/multi_imv/` directory contains:
+### Multiclass (`examples/multi_imv/`)
 
-1. **Nursery Dataset** (`multi_imv_nursery.py`)
-   - 3 classes: Not recommend, Priority, Special priority
-   - 8 categorical features
-   - Models: Logistic Regression, XGBoost, LightGBM
+| Notebook | Classes | Features | Source |
+|---|---|---|---|
+| `multi_imv_nursery.ipynb` | 3 of 5 (two negligible classes dropped) | 8 categorical | UCI id 76 |
+| `multi_imv_car_evaluation.ipynb` | 4 | 6 categorical | UCI id 19 |
+| `multi_imv_dry_bean.ipynb` | 7 | 16 continuous | UCI id 602 |
 
-2. **Car Evaluation Dataset** (`multi_imv_car_evaluation.py`)
-   - 4 classes: Unacceptable, Acceptable, Good, Very good
-   - 6 categorical features
-   - Models: Logistic Regression, XGBoost, LightGBM
+### Ablation (`examples/ablation_imv/`)
 
-3. **Dry Bean Dataset** (`multi_imv_dry_bean.py`)
-   - 7 bean varieties
-   - 16 continuous structural features
-   - Models: Logistic Regression, XGBoost, LightGBM
+| Notebook | What it ablates | Source |
+|---|---|---|
+| `ablation_imv_imdb.ipynb` | DistilBERT layers, attention, FFN, layer norm | HF `stanfordnlp/imdb` |
+| `ablation_imv_mnist.ipynb` | CNN convolution, hidden layer, dropout, complete feature extractor | OpenML `mnist_784` v1 |
+| `ablation_imv_har.ipynb` | bidirectionality, recurrent depth, temporal attention, temporal order | UCI HAR id 240 |
 
-4. **Combined Figure** (`create_combined_figure.py`)
-   - Generates publication-quality combined visualization
-   - Side-by-side IMV confusion matrices for all three datasets
+All three notebooks run 50 restartable fits: any variant whose predictions
+already exist on disk and pass its alignment checks is reused. IMDb is roughly
+two hours on the accelerated reference machine and can take several hours on
+CPU alone; MNIST uses the canonical 60,000/10,000 split and one epoch per fit;
+HAR preserves UCI's subject-disjoint split and uses 15 epochs per fit.
+
+Figures and result tables are embedded in the executed notebooks. Downloaded
+datasets, restart predictions, and optional file exports stay outside the
+repository under `~/.cache/imv`. See [examples/README.md](examples/README.md) for
+runtimes and conventions.
+
+Every notebook figure is also exported to the external artifact cache in three
+publication-ready forms: PNG at 800 DPI, PDF, and SVG. The shared
+`imv.utils.save_figure` helper enforces this consistently.
 
 ### Running Examples
 
 ```bash
-# Binary classification examples
-cd examples/package_version/shap_imv
-python shap_imv_titanic.py
-python shap_imv_breastcancer.py
-python shap_imv_winequality.py
-
-# Multi-class examples
-cd ../multi_imv
-python multi_imv_nursery.py
-python multi_imv_car_evaluation.py
-python multi_imv_dry_bean.py
-
-# Generate combined figure
-python create_combined_figure.py
+pip install -r requirements.txt             # all ten notebooks
+jupyter lab examples/
 ```
 
-All scripts support caching:
-- `--force`: Ignore cache and re-run analysis
-- `--clear-cache`: Delete all cached results
+The notebooks may be launched from their own directories without modifying the
+checkout; all caches and optional exports are written under `~/.cache/imv`.
 
 ---
 
 ## Testing
 
 ```bash
-# Run all tests
-cd tests
-python test_shap_imv.py
-python test_multi_imv.py
-python test_ablate_imv.py
-
-# Run specific test
-python test_shap_imv.py --test basic
+pytest                                          # fast suite; the merge gate
+pytest --cov=src/imv --cov-report=term-missing  # with coverage
+pytest -m slow -o addopts='-ra'                 # research-scale demonstrations
+pytest -m deep_learning -o addopts='-ra'        # needs the deep-learning extra
+pytest -m ""                                    # everything
 ```
+
+The default marker expression in `pyproject.toml` excludes tests marked `slow`,
+`network` and `deep_learning`, so a bare `pytest` is fast and needs no network.
+Alongside the unit tests, `tests/test_settings_contract.py` holds
+`config/settings.yaml` to the live Python signatures, and
+`tests/test_repository_contract.py` checks that every example still ships,
+downloads its own data and uses the required ten seeds.
 
 ---
 
 ## API Reference
+
+Signatures below are the live defaults. `config/settings.yaml` carries the same
+values in machine-readable form and is held to the Python signatures by
+`tests/test_settings_contract.py`.
+
+### Core functions
+
+```python
+from imv import (
+    calculate_imv,
+    get_w,
+    imv_from_likelihoods,
+    information_deficit,
+    ll,
+    vanilla_imv,
+)
+
+ll(x, p, epsilon=1e-9)                       # geometric mean Bernoulli likelihood
+get_w(a, guess=0.5, bounds=[(0.5, 1 - 1e-12)], tolerance=1e-9,
+      chance_tolerance_nats=0.5, method="brentq")
+calculate_imv(y_basic, y_enhanced, y=None, epsilon=1e-9, tolerance=1e-9,
+              method="brentq")
+vanilla_imv(baseline, enhanced, outcomes=None, epsilon=1e-9, tolerance=1e-9,
+            method="brentq")
+imv_from_likelihoods(likelihood_basic, likelihood_enhanced,
+                     tolerance=1e-9, method="brentq")
+information_deficit(a)                       # log(2a) nats; defined below chance
+```
+
+In three-argument mode, `calculate_imv` and `vanilla_imv` accept one-dimensional
+NumPy arrays, pandas `Series`, lists or tuples. Python and NumPy numeric scalars
+are valid constant predictions and are broadcast to the outcome length; scalar
+outcomes represent a one-observation dataset. In two-argument mode, both inputs
+are scalar geometric mean likelihoods in `(0, 1]`. A length-one vector is never
+broadcast implicitly.
+
+`method="brentq"` brackets the root of `g(w) - log(a)` and cannot stall.
+`method="lbfgsb"` reproduces pre-1.2.0 published numbers; pair it with
+`bounds=[(0.5, 0.999)]` for an exact legacy match. `guess` and `tolerance` apply
+to `"lbfgsb"` only.
 
 ### BinaryIMV Class
 
@@ -331,20 +505,28 @@ from imv import BinaryIMV
 evaluator = BinaryIMV(
     data: pd.DataFrame,
     outcome_variable: str,
-    optional_explanatory_variables: List[str],
-    model_creator: Callable,
-    split_method: str,  # 'kfold' or 'train_test_split'
-    n_splits: int,
-    prop_test: float,
-    model_type: str,  # 'classification' or 'regression'
-    random_seed: int = 42
+    optional_explanatory_variables: list[str],
+    model_creator: Callable,          # returns a fresh fit/predict_proba estimator
+    split_method: str = 'kfold',      # also: stratified_kfold,
+                                      # train_test_split, stratified_train_test_split
+    n_splits: int = 5,
+    prop_test: float = 0.2,           # holdout modes only
+    model_type: str = 'classification',
+    all_combinations_imv: dict | None = None,
+    random_seed: int = 42,
+    n_jobs: int = 1,                  # joblib workers across coalitions
+    verbose: bool = False,
 )
 ```
 
 **Key Methods:**
-- `run_evaluation()`: Compute IMV for all feature combinations
-- `evaluate_imvshapley(ax=None, figsize=(12, 4))`: Calculate and visualize SHAP-IMV values
-- `calculate_imvshapley_value(variable)`: SHAP-IMV for one feature
+- `run_evaluation()`: fit every feature coalition; stores and returns the mapping
+- `calculate_imvshapley_value(variable)`: exact SHAP-IMV for one feature
+- `evaluate_imvshapley(ax=None, figsize=(12, 4))`: all values, plus a bar plot
+- `plot_single_var_combinations_layered_violin_centralized_zero(ax=None, figsize=(6, 4))`
+
+Use `split_method='kfold'` or `'train_test_split'` for parity with the original
+notebooks, and the stratified variants for a new analysis — then report which.
 
 ### MulticlassIMV Class
 
@@ -356,40 +538,66 @@ evaluator = MulticlassIMV(
     outcome_variable: str,
     model_creator: Callable,
     n_splits: int = 10,
-    optional_explanatory_variables: Optional[List[str]] = None,
-    random_state: Optional[int] = None
+    optional_explanatory_variables: list[str] | None = None,
+    random_state: int | None = None,
+    stratified: bool = False,         # False preserves the original KFold
+    verbose: bool = False,
 )
 ```
 
 **Key Methods:**
-- `calculate_imv_matrix()`: Pairwise IMV confusion matrix
-- `plot_imv_heatmap(imv_matrix, ax=None, figsize=(8, 8))`: Heatmap visualization
-- `calculate_performance_metrics()`: Accuracy, precision, recall, Brier score
+- `k_fold_one_vs_all()`: per-fold class-vs-rest values and their mean
+- `k_fold_imv_matrix()`: per-fold pairwise matrices and their mean
+- `one_vs_all_single_fold(data, outcome_variable, p_base, p_enhanced, classes=None)`
+- `multinominal_imv_matrix(...)`: the historical misspelling; low-level pairwise
+- `multinomial_IMV_heatmap(imv_matrix, ax=None, figsize=(6, 6))`
+- `multinomial_IMV_boxplot(imv_results, figsize=(6, 6), ax=None)`
+
+Both numeric and string labels are supported. Pass `classes=model.classes_` to
+the low-level per-fold methods whenever a fold might not hold every trained
+class; the `k_fold_*` methods pass it automatically.
 
 ### AblationIMV Class
 
 ```python
 from imv import AblationIMV
 
-ablator = AblationIMV(random_seed: int = 42)
+ablator = AblationIMV(random_seed: int = 42)   # CUDA > MPS > CPU, auto-detected
 ```
 
 **Key Methods:**
-- `train_and_evaluate(model, train_dataloader, test_dataloader, ...)`: Train and evaluate model
-- `calculate_imv_matrix(predictions_dict)`: Pairwise IMV for multiple models
-- `reduce_bert_layers(model, num_layers_to_keep)`: Reduce transformer layers
+- `train_and_evaluate(model, train_dataloader, test_dataloader, num_epochs=3,
+  lr=2e-5, optimizer_class=None, scheduler_fn=None, max_grad_norm=None,
+  seed=None, verbose=True)`
+- `calculate_imv_matrix(predictions_dict, target_column='True Label',
+  prob_column='Positive Probability')`: directional matrix, rows = enhanced
+- `average_imv_matrices(matrices_list)`: mean across seeds or runs
+- `reduce_bert_layers(model, num_layers_to_keep)`: truncates **in place**
+
+`calculate_imv_matrix`, `average_imv_matrices` and `reduce_bert_layers` are
+static. Matrix calculation and averaging work without PyTorch or an
+`AblationIMV` instance; construction, training, seeding and BERT layer reduction
+need the `deep-learning` extra.
 
 ---
 
 ## Performance
 
-| Configuration | Combinations | Estimated Time | CPU Usage |
-|--------------|--------------|----------------|-----------|
-| 5 variables, 5-fold | 32 | 1-2 minutes | High |
-| 10 variables, 10-fold | 1,024 | 3-8 minutes | Very High |
-| 11 variables, 10-fold | 2,048 | 5-15 minutes | Very High |
+Exact SHAP-IMV enumerates the full power set, so cost is
+`2**n_features * n_splits * 2` fits per estimator per seed. Roughly:
 
-*Performance scales with number of CPU cores (uses all cores by default)*
+| Configuration | Coalitions | Model fits | Feasibility |
+|---|---:|---:|---|
+| 5 features, 5-fold | 32 | 320 | seconds |
+| 10 features, 10-fold | 1,024 | 20,480 | minutes |
+| 11 features, 10-fold | 2,048 | 40,960 | tens of minutes |
+| 15 features, 10-fold | 32,768 | 655,360 | impractical for most estimators |
+
+`n_jobs` defaults to **1**, so the library does not silently occupy every core.
+Set it explicitly to parallelise across coalitions, and avoid nesting it with
+estimator-level parallelism (`n_jobs` inside XGBoost or LightGBM). Exact mode is
+practical up to roughly 10–15 inexpensive features; beyond that the method needs
+sampled coalitions rather than a bigger machine.
 
 ---
 
@@ -398,35 +606,52 @@ ablator = AblationIMV(random_seed: int = 42)
 ### Minimum Requirements
 - **CPU:** Dual-core processor
 - **RAM:** 4GB
-- **Python:** 3.8+
+- **Python:** 3.9+
 
 ### Recommended for Deep Learning
-- **GPU:** 
+- **GPU:**
   - NVIDIA GPU with 8GB+ VRAM (CUDA)
   - Apple M1/M2/M3 (8GB+ unified memory)
 - **RAM:** 16GB+
 - **Storage:** 10GB+ for model checkpoints
 
+---
 
 ## Troubleshooting
 
-### Slow Performance
-- Reduce number of variables
-- Reduce `n_splits` parameter
-- Use `split_method='train_test_split'` instead of `'kfold'`
+### Slow performance
+- Reduce the number of features — cost is exponential in that count, and linear
+  in everything else
+- Reduce `n_splits`
+- Use a holdout `split_method` instead of `'kfold'`
+- Raise `n_jobs` (it defaults to 1)
 
-### Memory Issues
-- Test with fewer variables first
-- Close other applications
-- Consider using a subset of data for testing
+### Memory issues
+- Test with fewer features first
+- Subsample rows, or cut `n_splits`; note that cost is driven by the `2**n_features`
+  coalition count, so dropping a feature halves it
 
-### Import Errors
+### `ImportError: No module named imv`
+The sources live under `src/`, so the package must be installed — a dependency
+list alone is not enough:
+
 ```bash
-# Install missing packages
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
+### `BelowChanceLikelihoodWarning` and `NaN` results
+A geometric mean likelihood below 0.5 has no exact equivalent coin weight.
+`get_w` uses the boundary only within its documented finite-sample tolerance;
+further below it returns `NaN` and warns. This diagnoses miscalibration rather
+than weak discrimination: recalibrate on data separate from the scored holdout,
+and use `information_deficit(a)` to report the shortfall.
 
+### `IncompleteCoalitionWarning`
+`calculate_imvshapley_value` needs all `2**n_features` coalitions. Missing ones
+are treated as `IMV = 0`, which breaks additivity, so the result is not a valid
+Shapley value. Re-run `run_evaluation()` over the full power set.
+
+---
 
 ## Contact
 
@@ -436,6 +661,6 @@ pip install -r requirements.txt
 
 <div align="center">
 
-[Back to Top](#imv-information-model-vigor)
+[Back to Top](#imv-intermodel-vigorish)
 
 </div>
