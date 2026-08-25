@@ -628,7 +628,8 @@ sampled coalitions rather than a bigger machine.
 
 ### Memory issues
 - Test with fewer features first
-- Subsample rows; the examples cap at 4,000 for exactly this reason
+- Subsample rows, or cut `n_splits`; note that cost is driven by the `2**n_features`
+  coalition count, so dropping a feature halves it
 
 ### `ImportError: No module named imv`
 The sources live under `src/`, so the package must be installed — a dependency
