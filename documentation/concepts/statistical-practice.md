@@ -46,11 +46,11 @@ the held-out rows. Never recalibrate directly on the final test outcomes.
 ## Repeat stochastic fits
 
 Neural networks, boosted trees, subsampling, and shuffled folds can vary by seed.
-Run at least five complete seeds when seed variability is material. Repeat the
+Run at least ten complete seeds when seed variability is material. Repeat the
 entire pipeline, not only the final metric calculation, and retain seed-level
 results before averaging.
 
-The standard deviation across five seeds describes run-to-run stability. It is
+The standard deviation across ten seeds describes run-to-run stability. It is
 not a confidence interval for a population quantity. Folds also overlap in their
 training data, so their spread is not an independent-sample standard error.
 
@@ -77,4 +77,3 @@ replications of every published analysis. Several tabular notebooks fit simple
 aggregate preprocessing before cross-validation to keep the examples readable;
 their pages disclose this optimistic leakage. New research should move that
 preprocessing into the estimator pipeline.
-

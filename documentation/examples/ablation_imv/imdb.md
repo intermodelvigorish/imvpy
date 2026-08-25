@@ -24,7 +24,7 @@ budget, not the original paper's full training setting.
 
 ## Ablations and seeds
 
-Five variants run under each seed in `[42, 43, 44, 45, 46]`:
+Five variants run under each seed in `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]`:
 
 | Variant | Change from pretrained DistilBERT |
 |---|---|
@@ -32,16 +32,20 @@ Five variants run under each seed in `[42, 43, 44, 45, 46]`:
 | `3Layers` | Keeps the first three transformer layers through `AblationIMV.reduce_bert_layers` |
 | `NoAttention` | Replaces query, key, and value projections with identities |
 | `NoFFN` | Replaces each feed-forward block with an identity |
-| `NoNorm` | Replaces self-attention and output layer normalization with identities |
+| `NoNorm` | Replaces self-attention and output layer normalization with identities; uses float64 to prevent overflow in the unnormalized residual gradients |
 
-Every fit is delegated to `AblationIMV.train_and_evaluate` with AdamW, batch
-size 16, two epochs, and learning rate `2e-5`. The seed controls subsampling,
-classifier initialization, and minibatch order. Twenty-five fits make runtime
+Every fit is delegated to `AblationIMV.train_and_evaluate` with AdamW, gradient
+norm clipping at 1.0, batch size 16, two epochs, and learning rate `2e-5`. The
+seed controls subsampling,
+classifier initialization, and minibatch order. Fifty fits make runtime
 hardware-dependent: approximately two hours on the accelerated reference system
 and potentially several hours on CPU.
 
 Restart prediction CSVs live only in the external artifact cache. An existing
-variant/seed prediction file is reused; delete that file to rerun the fit.
+variant/seed prediction file is reused only after its schema, labels, row count,
+finite probability bounds, and probability sums validate; delete that file to
+rerun the fit.
+
 
 ## IMV outputs
 
@@ -57,4 +61,3 @@ misleading finite score.
 
 The directional heatmap and diagnostic plot are embedded and exported as
 800-DPI PNG, PDF, and SVG.
-

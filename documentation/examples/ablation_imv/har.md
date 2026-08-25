@@ -31,10 +31,10 @@ attention. The four ablations are `UniGRU`, `OneLayer`, `NoAttention`, and
 `MeanPoolMLP`; together they remove bidirectionality, recurrent depth, learned
 attention, or temporal recurrence entirely.
 
-Every architecture runs under seeds `[42, 43, 44, 45, 46]` via
+Every architecture runs under seeds `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]` via
 `AblationIMV.train_and_evaluate`. Training uses Adam, 15 epochs, learning rate
 `1e-3`, hidden size 64, batch size 128, and recurrent/head dropout where
-applicable. The 25 fits expose initialization, minibatch, and dropout variability.
+applicable. The 50 fits expose initialization, minibatch, and dropout variability.
 
 Restart predictions remain under the external artifact cache and are reused only
 after alignment and probability validation.
@@ -42,7 +42,7 @@ after alignment and probability validation.
 ## IMV outputs
 
 The installed package computes one directional ablation matrix per seed and the
-elementwise five-seed mean. The notebook retains each cell by enhanced model,
+elementwise ten-seed mean. The notebook retains each cell by enhanced model,
 baseline model, and seed, plus likelihood, information deficit, accuracy,
 parameter count, and runtime diagnostics.
 
@@ -50,4 +50,3 @@ Figures use the same semantics as the IMDb and MNIST examples: a full
 directional heatmap and a fixed-`FullBiGRU` comparison against each ablated
 baseline. Error bars are seed standard deviations, not confidence intervals.
 PNG at 800 DPI, PDF, and SVG are exported outside the repository.
-

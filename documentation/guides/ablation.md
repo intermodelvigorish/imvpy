@@ -53,7 +53,7 @@ Train and score every variant under each seed, then average whole matrices:
 ```python
 seed_matrices = []
 
-for seed in [42, 43, 44, 45, 46]:
+for seed in [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]:
     predictions_for_seed = train_all_variants(seed)
     seed_matrices.append(
         AblationIMV.calculate_imv_matrix(predictions_for_seed)
@@ -68,7 +68,7 @@ seed-level dispersion separately; it is not a confidence interval.
 
 Do not combine a full model from one seed with an ablation from another seed in
 the same seed-level contrast. Shared seeds control one source of run-to-run
-variation, while repeating at least five complete seeds exposes sensitivity to
+variation, while repeating at least ten complete seeds exposes sensitivity to
 initialization and minibatch order.
 
 ## PyTorch training helper
@@ -138,4 +138,3 @@ If any variant has a geometric mean likelihood substantially below 0.5, its
 weight and affected matrix cells are undefined. Report its
 `information_deficit` and investigate calibration rather than forcing those
 cells to zero.
-

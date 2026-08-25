@@ -45,6 +45,16 @@ DATA_DIR = os.path.join(
 FIGURES_DIR = os.path.join(TEST_DIR, 'figures')
 
 
+def relative_path(path):
+    """Format paths relative to the test invocation directory for portable logs."""
+    return os.path.relpath(os.path.abspath(path), start=os.getcwd())
+
+
+def relative_error(error, path):
+    """Remove a known absolute path from an exception before logging it."""
+    return str(error).replace(os.path.abspath(path), relative_path(path))
+
+
 def load_and_prepare_adult_income_data():
     """
     Load and prepare the Adult Income dataset
@@ -58,10 +68,13 @@ def load_and_prepare_adult_income_data():
     if os.path.exists(data_file):
         try:
             df_combined = pd.read_csv(data_file)
-            print(f"Loaded processed dataset from: {data_file}")
+            print(f"Loaded processed dataset from: {relative_path(data_file)}")
             return df_combined
         except Exception as e:
-            print(f"Warning: failed to read cached dataset ({data_file}): {e}")
+            print(
+                "Warning: failed to read cached dataset "
+                f"({relative_path(data_file)}): {relative_error(e, data_file)}"
+            )
 
     try:
         from ucimlrepo import fetch_ucirepo
@@ -101,9 +114,12 @@ def load_and_prepare_adult_income_data():
         # Save processed dataset for future test runs
         try:
             df_combined.to_csv(data_file, index=False)
-            print(f"Saved processed dataset to: {data_file}")
+            print(f"Saved processed dataset to: {relative_path(data_file)}")
         except Exception as e:
-            print(f"Warning: could not save processed dataset to {data_file}: {e}")
+            print(
+                "Warning: could not save processed dataset to "
+                f"{relative_path(data_file)}: {relative_error(e, data_file)}"
+            )
 
         return df_combined
 
@@ -182,7 +198,7 @@ def test_shap_imv_basic():
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_basic.png')
         save_figure(fig, out_path)
-        print(f"✓ Visualization saved to: {out_path}")
+        print(f"✓ Visualization saved to: {relative_path(out_path)}")
         plt.close()
     except Exception as e:
         print(f"Warning: Could not create visualization: {e}")
@@ -253,7 +269,7 @@ def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_shap_imv_full.png')
         save_figure(fig, out_path)
-        print(f"✓ SHAP-IMV visualization saved to: {out_path}")
+        print(f"✓ SHAP-IMV visualization saved to: {relative_path(out_path)}")
         plt.close()
 
         # Single variable violin plot
@@ -262,7 +278,7 @@ def test_shap_imv_full(model=create_logistic_regression_model, seed=42):
         plt.tight_layout()
         out_path = os.path.join(FIGURES_DIR, 'test_single_var_violin.png')
         save_figure(fig, out_path)
-        print(f"✓ Single variable violin plot saved to: {out_path}")
+        print(f"✓ Single variable violin plot saved to: {relative_path(out_path)}")
         plt.close()
     except Exception as e:
         print(f"Warning: Could not create visualization: {e}")

@@ -82,6 +82,5 @@ Set them before starting Jupyter so all notebook kernels inherit the values.
 `config/settings.yaml` records `paper_parity` and `recommended_production`
 profiles. They are documentation, not runtime presets. The parity profile keeps
 historical split choices where possible; the production profile recommends
-stratification, five repeated seeds for ablation, directional matrices, and
+stratification, ten repeated seeds for ablation, directional matrices, and
 aligned test rows. Copy only the settings justified by the current analysis.
-

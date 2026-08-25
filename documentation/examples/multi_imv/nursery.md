@@ -25,7 +25,7 @@ dictionary inside a fold-fitted pipeline.
 
 ## Models and seeds
 
-For every seed in `[42, 43, 44, 45, 46]`, `MulticlassIMV` runs five stratified
+For every seed in `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]`, `MulticlassIMV` runs five stratified
 folds for logistic regression, XGBoost, and LightGBM. Each seed controls fold
 shuffling and estimator randomness. The enhanced model uses all eight features;
 the package fits its constant-only baseline in the same training fold.
@@ -40,4 +40,3 @@ read like a directional ablation matrix.
 The final multi-panel heatmap compares the three estimator families and is
 exported as 800-DPI PNG, PDF, and SVG. Seed spread indicates stability rather
 than inferential uncertainty.
-

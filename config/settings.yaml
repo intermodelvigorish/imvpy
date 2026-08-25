@@ -54,6 +54,7 @@ defaults:
       learning_rate: 2.0e-5
       optimizer_class: null  # torch.optim.Adam
       scheduler_fn: null
+      max_grad_norm: null
       seed: null  # use random_seed
       verbose: true
       label_batch_key: labels
@@ -118,11 +119,11 @@ profiles:
       stratified: true
       random_state: 42
     ablation_imv:
-      repeated_seeds: [42, 43, 44, 45, 46]
+      repeated_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
       directional_matrix: true
       aligned_test_rows_required: true
 
 paper_example_seeds:
-  shap_titanic: [42, 123, 456]
-  multi_nursery: [42, 43, 44]
-  ablation: [42, 43, 44, 45, 46]
+  shap_titanic: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  multi_nursery: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  ablation: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]

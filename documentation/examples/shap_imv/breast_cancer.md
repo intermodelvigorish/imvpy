@@ -25,7 +25,7 @@ fit it inside a pipeline for leakage-free research.
 ## Models and seeds
 
 Logistic regression, XGBoost, and LightGBM are each run under seeds 42 through
-46 with five stratified folds. Every seed/estimator combination evaluates the
+51 with five stratified folds. Every seed/estimator combination evaluates the
 complete 64-coalition power set through the installed `BinaryIMV` class.
 
 ## IMV outputs
@@ -35,4 +35,3 @@ means and seed standard deviations. This dataset is small and highly separable,
 so probability calibration and the high-likelihood behavior of `get_w` matter;
 accuracy alone would conceal those differences. The final figure is exported in
 PNG at 800 DPI, PDF, and SVG.
-

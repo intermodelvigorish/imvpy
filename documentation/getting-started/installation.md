@@ -11,7 +11,7 @@ The project uses a `src/` layout, so adding only the repository root to
 
 ```bash
 python -m pip install .
-python -c "import imv; print(imv.__version__, imv.__file__)"
+python -c "import os, imv; print(imv.__version__, os.path.relpath(imv.__file__))"
 ```
 
 Use editable mode while changing the package or running repository notebooks:
@@ -57,7 +57,9 @@ jupyter nbconvert --execute --to notebook --inplace \
 
 Every notebook verifies that `imv.__file__` resolves to this checkout's
 `src/imv`. This prevents an older globally installed release from silently
-producing the results.
+producing the results. Package, cache, dataset, warning, and figure locations in
+notebook output are always rendered relative to their documented anchor; local
+absolute paths are never embedded in the committed notebooks.
 
 ## Data and artifact locations
 
@@ -96,4 +98,3 @@ conda activate imv
 ```
 
 `pyproject.toml` remains authoritative for package dependency ranges.
-

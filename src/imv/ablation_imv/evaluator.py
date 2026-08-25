@@ -170,9 +170,10 @@ class AblationIMV:
         )
         return model
     
-    def train_and_evaluate(self, model, train_dataloader, test_dataloader, 
-                          num_epochs=3, lr=2e-5, optimizer_class=None, 
-                          scheduler_fn=None, seed=None, verbose=True):
+    def train_and_evaluate(self, model, train_dataloader, test_dataloader,
+                           num_epochs=3, lr=2e-5, optimizer_class=None,
+                           scheduler_fn=None, max_grad_norm=None, seed=None,
+                           verbose=True):
         """
         Train and evaluate a model with automatic GPU/CPU detection.
         
@@ -195,6 +196,10 @@ class AblationIMV:
             Function called as ``scheduler_fn(optimizer=optimizer,
             num_training_steps=num_training_steps)``. Its result must implement
             ``step()``.
+        max_grad_norm : float, optional
+            If provided, clip the total gradient norm to this positive finite
+            value before each optimizer step. Non-finite gradients raise an
+            error instead of producing invalid predictions.
         seed : int, optional
             Random seed for this run
         verbose : bool, default=True
@@ -212,7 +217,15 @@ class AblationIMV:
             - 'test_recall': float
         """
         self.set_seed(seed)
-        
+        if max_grad_norm is not None:
+            if (
+                isinstance(max_grad_norm, (bool, np.bool_))
+                or not np.isscalar(max_grad_norm)
+                or not np.isfinite(max_grad_norm)
+                or max_grad_norm <= 0
+            ):
+                raise ValueError("max_grad_norm must be a positive finite scalar")
+            max_grad_norm = float(max_grad_norm)
         # Setup optimizer
         if optimizer_class is None:
             optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -245,11 +258,17 @@ class AblationIMV:
                 outputs = model(**batch)
                 loss = outputs.loss
                 logits = outputs.logits
+                if not torch.isfinite(loss):
+                    raise FloatingPointError("training produced a non-finite loss")
                 
                 total_loss += loss.item()
                 
                 optimizer.zero_grad()
                 loss.backward()
+                if max_grad_norm is not None:
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), max_grad_norm, error_if_nonfinite=True
+                    )
                 optimizer.step()
                 
                 if lr_scheduler is not None:
@@ -262,8 +281,12 @@ class AblationIMV:
             
             if verbose:
                 train_acc = accuracy_score(all_labels, all_preds)
-                train_precision = precision_score(all_labels, all_preds, average='binary')
-                train_recall = recall_score(all_labels, all_preds, average='binary')
+                train_precision = precision_score(
+                    all_labels, all_preds, average='binary', zero_division=0
+                )
+                train_recall = recall_score(
+                    all_labels, all_preds, average='binary', zero_division=0
+                )
                 avg_loss = total_loss / len(train_dataloader)
                 print(f"Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}, "
                       f"Accuracy: {train_acc:.4f}, Precision: {train_precision:.4f}, "
@@ -284,14 +307,21 @@ class AblationIMV:
                 outputs = model(**batch)
                 logits = outputs.logits
                 preds = logits.argmax(dim=-1)
+                probabilities = torch.softmax(logits, dim=-1)
+                if not torch.isfinite(probabilities).all():
+                    raise FloatingPointError("evaluation produced non-finite probabilities")
                 
                 all_test_preds.extend(preds.cpu().numpy())
                 all_test_labels.extend(batch['labels'].cpu().numpy())
-                all_test_logits.extend(torch.softmax(logits, dim=-1).cpu().numpy())
+                all_test_logits.extend(probabilities.cpu().numpy())
         
         test_acc = accuracy_score(all_test_labels, all_test_preds)
-        test_precision = precision_score(all_test_labels, all_test_preds, average='binary')
-        test_recall = recall_score(all_test_labels, all_test_preds, average='binary')
+        test_precision = precision_score(
+            all_test_labels, all_test_preds, average='binary', zero_division=0
+        )
+        test_recall = recall_score(
+            all_test_labels, all_test_preds, average='binary', zero_division=0
+        )
         
         if verbose:
             print(f"Test Accuracy: {test_acc:.4f}, Precision: {test_precision:.4f}, "
@@ -443,7 +473,7 @@ class AblationIMV:
         Example:
             >>> # Run ablation study with multiple seeds
             >>> matrices = []
-            >>> for seed in [42, 123, 456, 789, 999]:
+            >>> for seed in [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]:
             ...     # Train models with different seeds
             ...     predictions = run_ablation_study(seed=seed)
             ...     imv_mat = AblationIMV.calculate_imv_matrix(predictions)
@@ -456,7 +486,7 @@ class AblationIMV:
         Note:
             - Element-wise averaging (not matrix algebra)
             - Preserves index and column labels from first matrix
-            - Recommended: Use at least five complete seeds when fits are stochastic
+            - Recommended: Use at least ten complete seeds when fits are stochastic
             - Standard deviation can be computed separately with np.std()
         """
         if not matrices_list:

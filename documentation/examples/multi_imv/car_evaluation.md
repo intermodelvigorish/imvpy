@@ -22,7 +22,7 @@ ordinal or one-hot encoding inside each fold.
 ## Models and seeds
 
 Logistic regression, XGBoost, and LightGBM are evaluated over five stratified
-folds for each of seeds `[42, 43, 44, 45, 46]`. The seed controls both the fold
+folds for each of seeds `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]`. The seed controls both the fold
 partition and estimator randomness. All estimators expose aligned
 `predict_proba` columns through `classes_`, which the package passes to its
 low-level fold calculations.
@@ -37,4 +37,3 @@ constant baseline for each class pair.
 
 The estimator heatmaps use the shared package plotting style and are saved as
 PNG at 800 DPI, PDF, and SVG.
-

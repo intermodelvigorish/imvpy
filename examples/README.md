@@ -16,6 +16,11 @@ delegate seeding, device selection, training, prediction formatting, matrix
 calculation, and matrix averaging to `AblationIMV`; they do not carry notebook-local
 copies of those package implementations.
 
+Notebook output never embeds a machine-specific absolute path. Package provenance
+is relative to the repository, dataset messages are relative to the data cache,
+figure dictionaries are relative to the artifact directory, and warning locations
+are relativized before they reach notebook output.
+
 ## Binary — exact SHAP-IMV (`shap_imv/`)
 
 | Notebook | Source | Runtime |
@@ -37,9 +42,9 @@ copies of those package implementations.
 
 | Notebook | Source | Runtime |
 |---|---|---|
-| `ablation_imv_imdb.ipynb` | HF `stanfordnlp/imdb` | **~2 h accelerated; several hours CPU-only** (25 DistilBERT runs) |
-| `ablation_imv_mnist.ipynb` | OpenML `mnist_784` v1 | ~5 min (25 one-epoch CNN runs, 4 CPU threads) |
-| `ablation_imv_har.ipynb` | UCI HAR id 240 | ~7 min (25 15-epoch recurrent/MLP runs, 4 CPU threads) |
+| `ablation_imv_imdb.ipynb` | HF `stanfordnlp/imdb` | **~4 h accelerated; several hours CPU-only** (50 DistilBERT runs) |
+| `ablation_imv_mnist.ipynb` | OpenML `mnist_784` v1 | ~10 min (50 one-epoch CNN runs, 4 CPU threads) |
+| `ablation_imv_har.ipynb` | UCI HAR id 240 | ~14 min (50 15-epoch recurrent/MLP runs, 4 CPU threads) |
 
 ## Running them
 
@@ -107,7 +112,7 @@ treatment, including exact row counts and the reasoning behind each choice.
 
 ## Conventions
 
-- **Five complete runs per estimator or architecture** (seeds 42–46). Every
+- **Ten complete runs per estimator or architecture** (seeds 42–51). Every
   tabular estimator and every ablation variant is fitted under each seed.
   Reported values are means; the spread describes stability and is **not** a
   confidence interval.

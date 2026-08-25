@@ -2,7 +2,7 @@
 
 The repository contains ten fully executed notebooks. Every notebook downloads a
 public dataset dynamically, imports this checkout's installed `imv` package, runs
-every stochastic model or architecture under seeds 42 through 46, and embeds its
+every stochastic model or architecture under seeds 42 through 51, and embeds its
 tables and figures.
 
 | Family | Dataset | Model diversity | Notebook |
@@ -22,11 +22,11 @@ tables and figures.
 
 - No dataset or downloaded model is committed. Provider data caches live outside
   the working tree.
-- Seeds `[42, 43, 44, 45, 46]` wrap every estimator or architecture that has seed
+- Seeds `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]` wrap every estimator or architecture that has seed
   variability.
 - Tabular examples compare three estimator families rather than presenting one
   model as universal.
-- Ablation examples execute five variants under five seeds, for 25 fits each.
+- Ablation examples execute five variants under ten seeds, for 50 fits each.
 - All IMV scoring delegates to public functions or classes from this package.
 - Every figure is embedded and exported through `imv.utils.save_figure` as an
   800-DPI PNG, PDF, and SVG in the external artifact cache.
@@ -41,4 +41,3 @@ These notebooks are demonstrations on commonly used open datasets. They are not
 benchmark leaderboards. Only Adult Income, Nursery, and IMDb have generating
 code in the original research notebooks; none of these repository runs should be
 described as a bit-exact replication of a published figure.
-

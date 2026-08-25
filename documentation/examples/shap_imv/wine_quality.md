@@ -26,7 +26,7 @@ analysis should move scaling into `model_creator`.
 ## Models and seeds
 
 The complete six-feature power set is evaluated for logistic regression,
-XGBoost, and LightGBM. Each estimator is rerun for seeds `[42, 43, 44, 45, 46]`
+XGBoost, and LightGBM. Each estimator is rerun for seeds `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]`
 with five stratified folds, producing 640 model fits per estimator and seed.
 
 ## IMV outputs
@@ -36,4 +36,3 @@ keeps the estimator and seed dimensions, summarizes mean and standard deviation,
 and compares feature attribution with full-model IMV. The standard deviation is
 a seed-sensitivity summary, not a confidence interval. Figures are exported as
 800-DPI PNG, PDF, and SVG.
-

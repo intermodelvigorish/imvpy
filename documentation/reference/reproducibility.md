@@ -14,10 +14,10 @@ A seed does not guarantee bit-identical GPU training across hardware, driver,
 library, or kernel versions. It makes stochastic inputs controlled enough to
 measure remaining variation; it is not proof of determinism.
 
-## Five-seed policy
+## Ten-seed policy
 
 Every repository example runs each stochastic estimator or architecture under
-`[42, 43, 44, 45, 46]`. Use at least five complete runs when random
+`[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]`. Use at least ten complete runs when random
 initialization, subsampling, fold shuffling, dropout, or boosted-tree randomness
 can materially affect conclusions.
 
@@ -31,13 +31,14 @@ Record at minimum:
 
 ```bash
 python --version
-python -c "import imv; print(imv.__version__, imv.__file__)"
+python -c "import os, imv; print(imv.__version__, os.path.relpath(imv.__file__))"
 python -m pip freeze
 ```
 
 For deep learning, also record PyTorch, CUDA or MPS, accelerator model, driver,
-transformers, and datasets versions. The example notebooks print package source,
-dataset shapes, class counts, and relevant device information into stored output.
+transformers, and datasets versions. The example notebooks print the package
+source relative to the repository, plus dataset shapes, class counts, and relevant
+device information. Any displayed file location is relative to its named anchor.
 
 ## Dataset provenance
 
@@ -50,10 +51,10 @@ remote provider can never revise an asset.
 ## Restart caches
 
 Ablation notebooks cache prediction frames outside the repository because a
-25-fit run can be expensive. MNIST and HAR validate schema, labels, row count,
-finite probability bounds, and probability sums before reuse. IMDb reuses named
-seed/variant files; delete a file to force retraining after changing model code
-or dependencies.
+50-fit run can be expensive. MNIST and HAR validate schema, labels, row count,
+finite probability bounds, and probability sums before reuse. IMDb performs the
+same checks and uses a training-protocol tag in each seed/variant filename;
+delete a file to force retraining after changing model code or dependencies.
 
 Do not treat a stale prediction cache as reproducibility evidence. Include code
 version and configuration in cache keys for a production pipeline.
@@ -69,8 +70,7 @@ calculation.
 ## Documentation and tests
 
 The repository enforces defaults, notebook provenance guards, dynamic download
-code, five-seed loops, package imports, output formats, and documentation
+code, ten-seed loops, package imports, output formats, and documentation
 coverage through contract tests. A strict MkDocs build verifies navigation and
 generated API objects. These checks prevent mechanical drift but cannot certify
 the scientific validity of a new dataset or split design.
-

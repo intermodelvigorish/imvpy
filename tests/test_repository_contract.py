@@ -1,4 +1,6 @@
 import ast
+import re
+import warnings
 from pathlib import Path
 
 import nbformat
@@ -76,6 +78,7 @@ EXPECTED_FIGURE_EXPORTS = {
 }
 
 TABULAR_MODELS = {"lightgbm", "logistic_regression", "xgboost"}
+EXPECTED_SEEDS = list(range(42, 52))
 EXPECTED_SEEDED_MODELS = {
     "shap_imv_adult_income.ipynb": TABULAR_MODELS,
     "shap_imv_titanic.ipynb": TABULAR_MODELS,
@@ -117,6 +120,13 @@ DATA_FILE_SUFFIXES = {
     ".zip",
 }
 
+ABSOLUTE_PATH_PATTERNS = {
+    "POSIX": re.compile(r"(?<![A-Za-z0-9:/.<~])/(?!/)(?:[^/\s<>'\"]+/)+[^/\s<>'\"]*"),
+    "Windows drive": re.compile(r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/]"),
+    "Windows UNC": re.compile(r"(?<!\\)\\\\[^\\/\s]+[\\/]"),
+    "file URI": re.compile(r"\bfile:" r"//", re.IGNORECASE),
+}
+
 
 def maintained_notebooks():
     return [
@@ -140,7 +150,7 @@ def notebook_python(path):
 
 
 def notebook_output_text(path):
-    """Flatten only stored outputs, excluding source-code strings."""
+    """Flatten textual stored outputs without scanning encoded image payloads."""
     notebook = nbformat.read(path, as_version=4)
     parts = []
     for cell in notebook.cells:
@@ -148,9 +158,19 @@ def notebook_output_text(path):
             if "text" in output:
                 value = output["text"]
                 parts.append("".join(value) if isinstance(value, list) else str(value))
-            for value in output.get("data", {}).values():
+            for mime_type, value in output.get("data", {}).items():
+                if not mime_type.startswith("text/") and mime_type != "application/json":
+                    continue
                 parts.append("".join(value) if isinstance(value, list) else str(value))
     return "\n".join(parts)
+
+
+def notebook_markdown_text(path):
+    """Flatten Markdown cells because their source is rendered directly to users."""
+    notebook = nbformat.read(path, as_version=4)
+    return "\n".join(
+        cell.source for cell in notebook.cells if cell.cell_type == "markdown"
+    )
 
 
 def test_every_example_family_is_present():
@@ -227,6 +247,15 @@ def test_every_notebook_uses_this_repository_package_directly():
         assert "Path(imv.__file__).resolve().parent" in source
         assert 'REPOSITORY_ROOT / "src" / "imv"' in source
         assert "IMV_SOURCE != EXPECTED_IMV_SOURCE" in source
+        assert "def relative_path(" in source
+        assert "def _relative_warning_text(" in source
+        assert "Path(tempfile.gettempdir())" in source
+        assert "warnings.showwarning = _show_relative_warning" in source
+        assert source.index("warnings.showwarning = _show_relative_warning") < source.index(
+            "%matplotlib inline"
+        )
+        assert "from {relative_path(IMV_SOURCE)}" in source
+        assert "from {IMV_SOURCE}" not in source
         assert "sys.path" not in source
         assert "PYTHONPATH" not in source
         assert "pip install" not in source
@@ -264,11 +293,49 @@ def test_every_notebook_figure_uses_the_three_format_package_exporter():
 
         assert imports_exporter
         assert len(export_calls) == EXPECTED_FIGURE_EXPORTS[path.name]
+        assert source.count("relative_path(path, start=ARTIFACTS)") == len(export_calls)
         assert ".savefig(" not in source
 
     plotting_source = (ROOT / "src/imv/utils/plotting.py").read_text()
     assert 'FIGURE_DPI = 800' in plotting_source
     assert 'FIGURE_FORMATS = ("png", "pdf", "svg")' in plotting_source
+
+
+def test_notebooks_never_render_absolute_paths():
+    """Committed outputs must be portable and must not expose machine paths."""
+    for path in maintained_notebooks():
+        output = "\n".join((notebook_markdown_text(path), notebook_output_text(path)))
+        for style, pattern in ABSOLUTE_PATH_PATTERNS.items():
+            match = pattern.search(output)
+            assert match is None, (
+                f"{path.name} contains a rendered {style} absolute path: "
+                f"{match.group(0)!r}"
+            )
+
+
+def test_absolute_path_detector_covers_platform_forms_without_matching_urls():
+    examples = {
+        "POSIX": "saved at " + "/" + "custom-volume/research/project/result.csv",
+        "Windows drive": "saved at " + "C:" + "\\Users\\researcher\\result.csv",
+        "Windows UNC": "saved at " + "\\" + "\\server\\share\\result.csv",
+        "file URI": "saved at " + "file:" + "//" + "/" + "home/researcher/result.csv",
+    }
+    for style, text in examples.items():
+        assert ABSOLUTE_PATH_PATTERNS[style].search(text)
+
+    url = "downloaded from https://example.org/data/result.csv"
+    assert all(pattern.search(url) is None for pattern in ABSOLUTE_PATH_PATTERNS.values())
+
+
+def test_pytest_warning_locations_are_relative():
+    rendered = warnings.formatwarning(
+        "portable warning",
+        UserWarning,
+        str(ROOT / "src/imv/utils/core.py"),
+        1,
+    )
+    assert str(ROOT) not in rendered
+    assert rendered.startswith("src/imv/utils/core.py:1:")
 
 
 def test_requirements_installs_the_complete_notebook_runtime():
@@ -344,19 +411,18 @@ def test_every_example_fetches_its_named_dataset_and_ships_none():
         assert "Path.cwd()" not in source, f"{path.name} writes artifacts into the checkout"
         assert "IMV_ARTIFACT_CACHE" in source
 
-    allowed = {ROOT / "requirements.txt"}
-    shipped_data = [
-        path
-        for path in ROOT.glob("**/*")
-        if path.is_file()
-        and path.suffix.lower() in DATA_FILE_SUFFIXES
-        and path not in allowed
-        and ".git" not in path.parts
-    ]
+    excluded_trees = {".git", ".venv", ".tox", "build", "dist", "site", "venv"}
+    shipped_data = []
+    for path in ROOT.glob("**/*"):
+        relative = path.relative_to(ROOT)
+        if any(part in excluded_trees for part in relative.parts):
+            continue
+        if path.is_file() and path.suffix.lower() in DATA_FILE_SUFFIXES:
+            shipped_data.append(relative)
     assert not shipped_data, f"data files must not be stored in the repository: {shipped_data}"
 
 
-def test_every_seeded_model_has_at_least_five_complete_runs():
+def test_every_seeded_model_has_ten_complete_runs():
     maintained = maintained_notebooks()
     assert {path.name for path in maintained} == set(EXPECTED_SEEDED_MODELS)
 
@@ -373,8 +439,9 @@ def test_every_seeded_model_has_at_least_five_complete_runs():
         assert len(assignments) == 1, f"{path.name} must assign SEEDS exactly once"
         seeds = ast.literal_eval(assignments[0].value)
         assert isinstance(seeds, list) and all(isinstance(seed, int) for seed in seeds)
-        assert len(seeds) == len(set(seeds)), f"{path.name} contains duplicate seeds"
-        assert len(seeds) >= 5, f"{path.name} uses {len(seeds)} seeds, need >= 5"
+        assert seeds == EXPECTED_SEEDS, (
+            f"{path.name} uses {seeds!r}; expected {EXPECTED_SEEDS!r}"
+        )
 
         seed_loops = [
             node for node in ast.walk(tree)

@@ -26,7 +26,7 @@ research should place `StandardScaler` inside each estimator pipeline.
 
 ## Models and seeds
 
-For each seed in `[42, 43, 44, 45, 46]`, the notebook uses five-fold stratified
+For each seed in `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]`, the notebook uses five-fold stratified
 cross-validation and fits logistic regression, XGBoost, and LightGBM. Each
 factory receives the seed; boosted estimators use 60 depth-three trees and one
 thread to avoid nested parallelism.
@@ -43,4 +43,3 @@ Negative SHAP-IMV means a feature reduced held-out coalition performance on
 average; it does not identify the negative income class.
 
 The figure is saved as 800-DPI PNG, PDF, and SVG through the package helper.
-

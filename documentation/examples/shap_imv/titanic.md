@@ -26,7 +26,7 @@ encoding, and scaling within each fold.
 
 ## Models and seeds
 
-Seeds `[42, 43, 44, 45, 46]` each define a five-fold stratified partition and
+Seeds `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]` each define a five-fold stratified partition and
 the random state for logistic regression, XGBoost, and LightGBM. Six features
 produce 64 coalitions and 640 null/enhanced fits per estimator per seed.
 
@@ -37,4 +37,3 @@ SHAP-IMV and the full-model IMV are retained by estimator and seed. The notebook
 plots means with seed standard deviations and exports PNG at 800 DPI plus PDF
 and SVG. Title and sex are intentionally both present, so their redundancy is
 visible in coalition attribution rather than hidden by pre-selection.
-

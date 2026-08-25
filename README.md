@@ -369,7 +369,7 @@ e0316491. [https://doi.org/10.1371/journal.pone.0316491](https://doi.org/10.1371
 Ten executed notebooks live under `examples/`. Every one runs from a cold
 clone: nothing is read from the repository, and each notebook downloads what it
 needs into a cache outside the working tree. Every tabular estimator and every
-ablation architecture is run under five seeds (42–46); the tabular examples
+ablation architecture is run under ten seeds (42–51); the tabular examples
 compare logistic regression, XGBoost and LightGBM, while the ablation examples
 compare deep-learning architectures.
 
@@ -409,7 +409,7 @@ Feature counts are capped deliberately: exact SHAP-IMV costs
 | `ablation_imv_mnist.ipynb` | CNN convolution, hidden layer, dropout, complete feature extractor | OpenML `mnist_784` v1 |
 | `ablation_imv_har.ipynb` | bidirectionality, recurrent depth, temporal attention, temporal order | UCI HAR id 240 |
 
-All three notebooks run 25 restartable fits: any variant whose predictions
+All three notebooks run 50 restartable fits: any variant whose predictions
 already exist on disk and pass its alignment checks is reused. IMDb is roughly
 two hours on the accelerated reference machine and can take several hours on
 CPU alone; MNIST uses the canonical 60,000/10,000 split and one epoch per fit;
@@ -451,7 +451,7 @@ The default marker expression in `pyproject.toml` excludes tests marked `slow`,
 Alongside the unit tests, `tests/test_settings_contract.py` holds
 `config/settings.yaml` to the live Python signatures, and
 `tests/test_repository_contract.py` checks that every example still ships,
-downloads its own data and uses at least five seeds.
+downloads its own data and uses the required ten seeds.
 
 ---
 
@@ -567,7 +567,8 @@ ablator = AblationIMV(random_seed: int = 42)   # CUDA > MPS > CPU, auto-detected
 
 **Key Methods:**
 - `train_and_evaluate(model, train_dataloader, test_dataloader, num_epochs=3,
-  lr=2e-5, optimizer_class=None, scheduler_fn=None, seed=None, verbose=True)`
+  lr=2e-5, optimizer_class=None, scheduler_fn=None, max_grad_norm=None,
+  seed=None, verbose=True)`
 - `calculate_imv_matrix(predictions_dict, target_column='True Label',
   prob_column='Positive Probability')`: directional matrix, rows = enhanced
 - `average_imv_matrices(matrices_list)`: mean across seeds or runs

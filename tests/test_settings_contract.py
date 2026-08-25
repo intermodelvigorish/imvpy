@@ -90,7 +90,7 @@ def test_ablation_settings_match_training_signatures():
     yaml_training = documented["training"]
     assert training["num_epochs"] == yaml_training["num_epochs"]
     assert training["lr"] == yaml_training["learning_rate"]
-    for name in ["optimizer_class", "scheduler_fn", "seed", "verbose"]:
+    for name in ["optimizer_class", "scheduler_fn", "max_grad_norm", "seed", "verbose"]:
         assert training[name] == yaml_training[name]
     matrix = defaults(AblationIMV.calculate_imv_matrix)
     assert matrix["target_column"] == documented["prediction_columns"]["target"]

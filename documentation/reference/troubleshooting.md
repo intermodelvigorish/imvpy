@@ -6,7 +6,7 @@ Install the project; the source lives under `src/`:
 
 ```bash
 python -m pip install -e .
-python -c "import imv; print(imv.__file__)"
+python -c "import os, imv; print(os.path.relpath(imv.__file__))"
 ```
 
 If a notebook imports a different checkout or release, reinstall editable mode
@@ -75,9 +75,9 @@ variant/seed file to rerun it after an interruption.
 Set cache variables before launching Jupyter:
 
 ```bash
-export IMV_CACHE_HOME=/path/to/cache
-export IMV_DATA_CACHE=/path/to/data-cache
-export IMV_ARTIFACT_CACHE=/path/to/artifacts
+export IMV_CACHE_HOME=../imv-cache
+export IMV_DATA_CACHE=../imv-data-cache
+export IMV_ARTIFACT_CACHE=../imv-artifacts
 ```
 
 No notebook intentionally writes datasets, CSVs, or figure files into the
@@ -95,4 +95,3 @@ mkdocs build --strict
 An unresolved API object usually means a documented symbol was renamed or its
 module path is wrong. A navigation warning means a Markdown page is missing from
 `mkdocs.yml` or vice versa; both are treated as release failures.
-

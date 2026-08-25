@@ -1,6 +1,7 @@
 """Keep the published documentation complete and connected to the live API."""
 
 import inspect
+import re
 from pathlib import Path
 
 import yaml
@@ -85,3 +86,18 @@ def test_documentation_build_is_a_release_gate():
     assert "mkdocs build --strict" in workflow
     assert "documentation/index.md" in readme
     assert "mkdocs build --strict" in readme
+
+
+def test_documentation_uses_only_relative_local_path_examples():
+    pages = [ROOT / "README.md", ROOT / "examples/README.md", *DOCS.rglob("*.md")]
+    local_absolute_path = re.compile(
+        r"(?<![A-Za-z0-9:/.<~])/(?!/)(?:[^/\s<>'\"]+/)+[^/\s<>'\"]*"
+    )
+    windows_absolute_path = re.compile(r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/]")
+
+    for page in pages:
+        text = page.read_text()
+        assert local_absolute_path.search(text) is None, page.relative_to(ROOT)
+        assert windows_absolute_path.search(text) is None, page.relative_to(ROOT)
+        assert "file:" + "//" not in text.lower(), page.relative_to(ROOT)
+        assert "print(imv.__file__)" not in text, page.relative_to(ROOT)

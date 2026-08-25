@@ -33,8 +33,8 @@ The five variants are `FullCNN`, `NoConv2`, `NoHidden`, `NoDropout`, and
 dropout, or the complete convolutional feature extractor. This gives a graded
 architecture study rather than five cosmetic hyperparameter changes.
 
-Each variant is trained under seeds `[42, 43, 44, 45, 46]` through
-`AblationIMV.train_and_evaluate`: 25 complete fits, one epoch each, Adadelta with
+Each variant is trained under seeds `[42, 43, 44, 45, 46, 47, 48, 49, 50, 51]` through
+`AblationIMV.train_and_evaluate`: 50 complete fits, one epoch each, Adadelta with
 learning rate 1.0, training batch 256, and test batch 1,000. Seeds control model
 initialization, shuffled minibatches, and dropout.
 
@@ -50,4 +50,3 @@ The first figure shows the full directional matrix. The second fixes each
 ablation as the baseline and `FullCNN` as the enhanced model, with seed standard
 deviation bars. Both are exported as 800-DPI PNG, PDF, and SVG to the external
 artifact cache.
-

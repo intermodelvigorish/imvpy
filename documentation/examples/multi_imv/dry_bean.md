@@ -23,7 +23,7 @@ fit the scaler separately inside each training fold.
 
 ## Models and seeds
 
-For seeds 42 through 46, the notebook evaluates logistic regression, XGBoost,
+For seeds 42 through 51, the notebook evaluates logistic regression, XGBoost,
 and LightGBM with five stratified folds. `MulticlassIMV` trains a fresh
 constant-only baseline and all-feature enhanced model in every fold. Tree models
 are deliberately small and single-threaded so the full repeated analysis remains
@@ -40,4 +40,3 @@ them.
 Three symmetric pairwise heatmaps are exported as 800-DPI PNG, PDF, and SVG.
 Their cells quantify improved discrimination for one bean pair at a time; they
 are not directional comparisons between class labels.
-

@@ -78,7 +78,7 @@ notebook must:
 
 - Download its public dataset dynamically into a cache outside the repository.
 - Import and verify this checkout's installed `imv` package.
-- Run every seed-variable estimator or architecture at least five times.
+- Run every seed-variable estimator or architecture at least ten times.
 - Delegate IMV scoring and shared figure export to the package.
 - Complete from a cold clone with its declared extra.
 - Embed final outputs while storing no separate dataset, prediction, CSV, PNG,
@@ -92,4 +92,3 @@ Use ASCII unless a file already requires Unicode. Prefer small, testable changes
 and comments that explain a non-obvious decision rather than restating code.
 Avoid silent numerical fallback: warnings or explicit `NaN` are preferable when
 the metric is mathematically undefined.
-
