@@ -1,9 +1,7 @@
-"""
-IMV (InterModel Vigorish) Package
+"""IMVpy: InterModel Vigorish for model comparison and attribution.
 
-A Python package for computing InterModel Vigorish in machine learning
-models using InterModel Vigorish (IMV) metrics. Supports binary classification,
-multi-class classification, and deep learning ablation studies.
+The package implements vanilla binary IMV, exact SHAP-IMV, multiclass
+extensions, and directional model-ablation comparisons.
 
 Key Components:
 - BinaryIMV: SHAP-based feature importance using IMV
@@ -16,10 +14,10 @@ Core Functions:
 - calculate_imv(): IMV score computation
 - vanilla_imv(): Discoverable entry point for the original binary IMV
 
-Example Usage:
-    >>> from imv import BinaryIMV
-    >>> evaluator = BinaryIMV(data, outcome_col='target', features=['f1', 'f2'])
-    >>> results = evaluator.run_evaluation()
+Example:
+    >>> from imvpy import vanilla_imv
+    >>> vanilla_imv(0.5, [0.8, 0.2], [1, 0]) > 0
+    True
 """
 
 from .ablation_imv import AblationIMV
@@ -54,7 +52,7 @@ __all__ = [
     "BinaryIMV",
     "MulticlassIMV",
     "AblationIMV",
-    
+
     # Backward compatibility aliases
     "IMVEvaluator",
     "MultinomialIMV",

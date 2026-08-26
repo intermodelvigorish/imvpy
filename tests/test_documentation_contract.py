@@ -6,12 +6,12 @@ from pathlib import Path
 
 import yaml
 
-import imv
-import imv.ablation
-import imv.binary
-import imv.core
-import imv.multiclass
-import imv.utils
+import imvpy
+import imvpy.ablation
+import imvpy.binary
+import imvpy.core
+import imvpy.multiclass
+import imvpy.utils
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "documentation"
@@ -54,7 +54,14 @@ def test_every_documentation_page_is_in_navigation_and_exists():
 
 def test_all_exported_symbols_are_documented_and_have_docstrings():
     text = _documentation_text()
-    modules = [imv, imv.core, imv.binary, imv.multiclass, imv.ablation, imv.utils]
+    modules = [
+        imvpy,
+        imvpy.core,
+        imvpy.binary,
+        imvpy.multiclass,
+        imvpy.ablation,
+        imvpy.utils,
+    ]
     for module in modules:
         for name in module.__all__:
             assert name in text, f"{module.__name__}.{name} is absent from documentation"
@@ -65,7 +72,7 @@ def test_all_exported_symbols_are_documented_and_have_docstrings():
 
 def test_every_public_evaluator_method_is_documented_and_has_a_docstring():
     text = _documentation_text()
-    for cls in (imv.BinaryIMV, imv.MulticlassIMV, imv.AblationIMV):
+    for cls in (imvpy.BinaryIMV, imvpy.MulticlassIMV, imvpy.AblationIMV):
         for name, _descriptor in vars(cls).items():
             if name.startswith("_"):
                 continue
@@ -80,16 +87,24 @@ def test_documentation_build_is_a_release_gate():
     pyproject = (ROOT / "pyproject.toml").read_text()
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     readme = (ROOT / "README.md").read_text()
+    contributing = (ROOT / "CONTRIBUTING.md").read_text()
 
     assert 'docs = [' in pyproject
     assert 'mkdocstrings[python]' in pyproject
-    assert "mkdocs build --strict" in workflow
-    assert "documentation/index.md" in readme
-    assert "mkdocs build --strict" in readme
+    assert "mkdocs build --strict --quiet" in workflow
+    assert "https://intermodelvigorish.github.io/imvpy/" in readme
+    assert "mkdocs build --strict --quiet" in contributing
 
 
 def test_documentation_uses_only_relative_local_path_examples():
-    pages = [ROOT / "README.md", *DOCS.rglob("*.md")]
+    pages = [
+        ROOT / "README.md",
+        ROOT / "CHANGELOG.md",
+        ROOT / "CONTRIBUTING.md",
+        ROOT / "RELEASING.md",
+        ROOT / "SECURITY.md",
+        *DOCS.rglob("*.md"),
+    ]
     local_absolute_path = re.compile(
         r"(?<![A-Za-z0-9:/.<~])/(?!/)(?:[^/\s<>'\"]+/)+[^/\s<>'\"]*"
     )
@@ -100,4 +115,18 @@ def test_documentation_uses_only_relative_local_path_examples():
         assert local_absolute_path.search(text) is None, page.relative_to(ROOT)
         assert windows_absolute_path.search(text) is None, page.relative_to(ROOT)
         assert "file:" + "//" not in text.lower(), page.relative_to(ROOT)
-        assert "print(imv.__file__)" not in text, page.relative_to(ROOT)
+        assert "print(imvpy.__file__)" not in text, page.relative_to(ROOT)
+
+
+def test_pypi_readme_code_and_links_are_portable():
+    readme = (ROOT / "README.md").read_text()
+
+    python_blocks = re.findall(r"```python\n(.*?)```", readme, re.DOTALL)
+    assert python_blocks
+    for index, source in enumerate(python_blocks, start=1):
+        compile(source, f"README.md python block {index}", "exec")
+
+    markdown_links = re.findall(r"\[[^]]+\]\(([^)]+)\)", readme)
+    assert markdown_links
+    for target in markdown_links:
+        assert target.startswith(("https://", "#")), target

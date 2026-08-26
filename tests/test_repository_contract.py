@@ -1,14 +1,20 @@
-import re
 import warnings
 from pathlib import Path
 
 import numpy as np
 import pytest
+import yaml
 from scipy.optimize import brentq
 
-from imv import calculate_imv
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.9 and 3.10
+    import tomli as tomllib
+
+from imvpy import calculate_imv
 
 ROOT = Path(__file__).resolve().parents[1]
+PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text())
 
 DATA_FILE_SUFFIXES = {
     ".arff",
@@ -57,49 +63,71 @@ def repository_files():
 
 def test_src_layout_has_canonical_subpackages_and_no_root_python_package():
     expected = {
-        ROOT / "src/imv/utils/core.py",
-        ROOT / "src/imv/utils/plotting.py",
-        ROOT / "src/imv/shap_imv/evaluator.py",
-        ROOT / "src/imv/multi_imv/evaluator.py",
-        ROOT / "src/imv/ablation_imv/evaluator.py",
+        ROOT / "src/imvpy/utils/core.py",
+        ROOT / "src/imvpy/utils/plotting.py",
+        ROOT / "src/imvpy/shap_imv/evaluator.py",
+        ROOT / "src/imvpy/multi_imv/evaluator.py",
+        ROOT / "src/imvpy/ablation_imv/evaluator.py",
     }
     assert all(path.is_file() for path in expected)
-    assert not list((ROOT / "imv").glob("*.py"))
+    assert not (ROOT / "src/imv").exists()
+    assert not list((ROOT / "imvpy").glob("*.py"))
 
 
 def test_project_metadata_targets_the_standalone_package_repository():
-    pyproject = (ROOT / "pyproject.toml").read_text()
+    project = PYPROJECT["project"]
     mkdocs = (ROOT / "mkdocs.yml").read_text()
     readme = (ROOT / "README.md").read_text()
 
-    assert 'name = "imv"' in pyproject
-    assert "github.com/intermodelvigorish/PyIMV" in pyproject
-    assert "intermodelvigorish.github.io/PyIMV/" in pyproject
-    for text in (pyproject, mkdocs, readme):
-        assert "imv_ml_package" not in text
+    assert project["name"] == "imvpy"
+    assert project["license"] == "MIT"
+    assert project["license-files"] == ["LICENSE"]
+    assert project["readme"]["content-type"] == "text/markdown"
+    assert project["requires-python"] == ">=3.9"
+    assert project["urls"]["Repository"] == "https://github.com/intermodelvigorish/imvpy"
+    assert project["urls"]["Documentation"] == "https://intermodelvigorish.github.io/imvpy/"
+    assert "github.com/intermodelvigorish/imvpy" in mkdocs
+    assert "github.com/intermodelvigorish/imvpy" in readme
+    assert "python -m pip install imvpy" in readme
+    assert not (ROOT / "setup.py").exists()
+
+    expected_python_classifiers = {
+        f"Programming Language :: Python :: 3.{minor}" for minor in range(9, 15)
+    }
+    assert expected_python_classifiers <= set(project["classifiers"])
+    assert project["keywords"]
 
 
-def test_repository_contains_no_replication_assets_or_dependencies():
+def test_release_support_files_are_present_and_versioned():
+    for filename in (
+        "CHANGELOG.md",
+        "CITATION.cff",
+        "CONTRIBUTING.md",
+        "MANIFEST.in",
+        "RELEASING.md",
+        "SECURITY.md",
+    ):
+        assert (ROOT / filename).is_file()
+
+    citation = yaml.safe_load((ROOT / "CITATION.cff").read_text())
+    assert citation["version"] == PYPROJECT["project"]["version"]
+    assert citation["license"] == "MIT"
+    assert citation["preferred-citation"]["doi"] == "10.1371/journal.pone.0316491"
+
+
+def test_repository_contains_no_replication_assets():
     files = list(repository_files())
     assert not any(path.suffix.lower() == ".ipynb" for path in files)
-    assert not any(path.parts[0] == "examples" for path in files)
-    assert not any(path.parts[:2] == ("documentation", "examples") for path in files)
-    assert not (ROOT / "requirements.txt").exists()
 
-    pyproject = (ROOT / "pyproject.toml").read_text()
-    for extra in ("notebooks", "examples", "examples-deep-learning"):
-        assert re.search(rf"^{re.escape(extra)}\s*=", pyproject, re.MULTILINE) is None
-    for replication_dependency in (
-        "jupyter",
-        "nbclient",
-        "nbformat",
-        "ucimlrepo",
-        "xgboost",
-        "lightgbm",
-        "transformers",
-        '"datasets',
-    ):
-        assert replication_dependency not in pyproject.lower()
+    declared_extras = set(PYPROJECT["project"]["optional-dependencies"])
+    assert declared_extras == {
+        "progress",
+        "deep-learning",
+        "test",
+        "docs",
+        "release",
+        "dev",
+    }
 
 
 def test_repository_ships_no_data_files():
@@ -111,11 +139,11 @@ def test_pytest_warning_locations_are_relative():
     rendered = warnings.formatwarning(
         "portable warning",
         UserWarning,
-        str(ROOT / "src/imv/utils/core.py"),
+        str(ROOT / "src/imvpy/utils/core.py"),
         1,
     )
     assert str(ROOT) not in rendered
-    assert rendered.startswith("src/imv/utils/core.py:1:")
+    assert rendered.startswith("src/imvpy/utils/core.py:1:")
 
 
 def test_package_matches_independent_transcription_of_published_formula():
@@ -151,3 +179,53 @@ def test_package_matches_independent_transcription_of_published_formula():
 
 def test_no_stale_parity_files_remain():
     assert not [path for path in repository_files() if "parity" in path.name.lower()]
+
+
+def test_publishing_workflows_use_oidc_and_separate_builds():
+    ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    versions = ci["jobs"]["test"]["strategy"]["matrix"]["python-version"]
+    assert versions == ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+    assert ci["jobs"]["build"]["needs"] == ["lint", "test", "deep-learning"]
+    deep_learning = ci["jobs"]["deep-learning"]
+    deep_learning_text = yaml.safe_dump(deep_learning)
+    assert 'python-version: "3.14"' in (ROOT / ".github/workflows/ci.yml").read_text()
+    assert "https://download.pytorch.org/whl/cpu" in deep_learning_text
+    assert "tests/test_ablation_torch.py" in deep_learning_text
+
+    workflows = {
+        "publish-test.yml": ("testpypi", "https://test.pypi.org/legacy/"),
+        "publish.yml": ("pypi", None),
+    }
+    for filename, (environment, repository_url) in workflows.items():
+        text = (ROOT / ".github/workflows" / filename).read_text()
+        workflow = yaml.safe_load(text)
+        assert set(workflow["jobs"]) == {"build", "publish"}
+        publish = workflow["jobs"]["publish"]
+        assert publish["needs"] == "build"
+        assert publish["environment"]["name"] == environment
+        assert publish["permissions"] == {"id-token": "write"}
+        assert "pypa/gh-action-pypi-publish@release/v1" in text
+        assert "PYPI_TOKEN" not in text
+        assert "password:" not in text
+        if repository_url is not None:
+            assert repository_url in text
+
+    production = (ROOT / ".github/workflows/publish.yml").read_text()
+    assert "release tag {actual!r} must equal {expected!r}" in production
+
+
+def test_documentation_workflow_builds_strictly_and_deploys_with_oidc():
+    text = (ROOT / ".github/workflows/docs.yml").read_text()
+    workflow = yaml.safe_load(text)
+
+    assert set(workflow["jobs"]) == {"build", "deploy"}
+    assert workflow["jobs"]["deploy"]["needs"] == "build"
+    assert workflow["jobs"]["deploy"]["environment"]["name"] == "github-pages"
+    assert workflow["jobs"]["deploy"]["permissions"] == {
+        "pages": "write",
+        "id-token": "write",
+    }
+    assert "mkdocs build --strict --quiet" in text
+    assert "actions/configure-pages@v5" in text
+    assert "actions/upload-pages-artifact@v4" in text
+    assert "actions/deploy-pages@v4" in text

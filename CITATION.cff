@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use IMVpy, cite the software version and the method paper below."
+title: "IMVpy: InterModel Vigorish for probabilistic model comparison and attribution"
+type: software
+authors:
+  - family-names: Yan
+    given-names: J
+  - family-names: Rahal
+    given-names: Charles
+version: 1.2.0
+repository-code: "https://github.com/intermodelvigorish/imvpy"
+url: "https://intermodelvigorish.github.io/imvpy/"
+license: MIT
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Domingue
+      given-names: Benjamin W.
+    - family-names: Rahal
+      given-names: Charles
+    - family-names: Faul
+      given-names: Jessica
+    - family-names: Freese
+      given-names: Jeremy
+    - family-names: Kanopka
+      given-names: Klint
+    - family-names: Rigos
+      given-names: Alexandros
+    - family-names: Stenhaug
+      given-names: Ben
+    - family-names: Tripathi
+      given-names: Ajay Shanker
+  title: "The InterModel Vigorish (IMV) as a flexible and portable approach for quantifying predictive accuracy with binary outcomes"
+  journal: PLOS ONE
+  volume: 20
+  issue: 3
+  doi: "10.1371/journal.pone.0316491"
+  date-published: "2025-03-21"

@@ -2,8 +2,8 @@
 # authoritative for runtime and development dependency ranges.
 #
 #   conda env create -f environment.yml
-#   conda activate imv
-name: imv
+#   conda activate imvpy
+name: imvpy
 channels:
   - conda-forge
 dependencies:

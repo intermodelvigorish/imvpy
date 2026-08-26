@@ -6,8 +6,8 @@ from pathlib import Path
 
 import yaml
 
-from imv import AblationIMV, BinaryIMV, MulticlassIMV
-from imv.utils.core import (
+from imvpy import AblationIMV, BinaryIMV, MulticlassIMV
+from imvpy.utils.core import (
     calculate_imv,
     get_w,
     imv_from_likelihoods,
@@ -28,14 +28,16 @@ def defaults(callable_object):
 
 
 def test_version_is_declared_consistently():
-    """pyproject, package __version__ and the settings reference must agree."""
-    import imv
+    """All user-visible package version declarations must agree."""
+    import imvpy
 
     pyproject = (ROOT / "pyproject.toml").read_text()
     declared = re.search(r'^version = "([^"]+)"', pyproject, re.M).group(1)
-    assert imv.__version__ == declared
+    assert imvpy.__version__ == declared
     assert SETTINGS["package_version"] == declared
-    assert f"IMV {declared} settings reference" in (ROOT / "config/settings.yaml").read_text()
+    assert f"IMVpy {declared} settings reference" in (ROOT / "config/settings.yaml").read_text()
+    citation = yaml.safe_load((ROOT / "CITATION.cff").read_text())
+    assert citation["version"] == declared
 
 
 def test_core_settings_match_signatures():

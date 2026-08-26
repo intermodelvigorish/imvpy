@@ -29,7 +29,7 @@ def _require_torch():
             import torch as torch_module
         except ImportError as exc:
             raise ImportError(
-                "Training with AblationIMV requires PyTorch; install imv[deep-learning]"
+                "Training with AblationIMV requires PyTorch; install imvpy[deep-learning]"
             ) from exc
         torch = torch_module
     return torch
@@ -119,7 +119,7 @@ class AblationIMV:
             # MPS uses the same manual_seed as CPU
             torch.mps.manual_seed(seed)
     
-    # Note: ll(), get_w(), and calculate_imv() are now imported from imv.core
+    # Note: ll(), get_w(), and calculate_imv() are imported from imvpy.core.
     # No need to redefine them here - this eliminates code duplication!
     
     @staticmethod

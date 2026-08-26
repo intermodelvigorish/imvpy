@@ -1,12 +1,12 @@
 # Troubleshooting
 
-## `ModuleNotFoundError: No module named 'imv'`
+## `ModuleNotFoundError: No module named 'imvpy'`
 
 Install the project; the source lives under `src/`:
 
 ```bash
 python -m pip install -e .
-python -c "import os, imv; print(os.path.relpath(imv.__file__))"
+python -c "import os, imvpy; print(os.path.relpath(imvpy.__file__))"
 ```
 
 If Python imports a different checkout or release, reinstall in editable mode
@@ -74,7 +74,7 @@ Install the documentation extra and use strict mode from the repository root:
 
 ```bash
 python -m pip install -e ".[docs]"
-mkdocs build --strict
+mkdocs build --strict --quiet
 ```
 
 An unresolved API object usually means a documented symbol was renamed or its

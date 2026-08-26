@@ -1,6 +1,6 @@
 # Plotting API
 
-Import shared plotting utilities from `imv.utils`.
+Import shared plotting utilities from `imvpy.utils`.
 
 ## Constants
 
@@ -11,17 +11,16 @@ Import shared plotting utilities from `imv.utils`.
 
 ## Matrix heatmap
 
-::: imv.utils.plotting.plot_imv_heatmap
+::: imvpy.utils.plotting.plot_imv_heatmap
 
 ## One-vs-rest boxplot
 
-::: imv.utils.plotting.plot_ova_boxplot
+::: imvpy.utils.plotting.plot_ova_boxplot
 
 ## Ablation heatmap
 
-::: imv.utils.plotting.plot_ablation_matrix
+::: imvpy.utils.plotting.plot_ablation_matrix
 
 ## Multi-format export
 
-::: imv.utils.plotting.save_figure
-
+::: imvpy.utils.plotting.save_figure

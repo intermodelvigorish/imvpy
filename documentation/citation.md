@@ -12,10 +12,14 @@ This package is based on:
 When reporting results, cite the method paper and record the package version:
 
 ```python
-import imv
+import imvpy
 
-print(imv.__version__)
+print(imvpy.__version__)
 ```
+
+GitHub and compatible reference managers can read the repository's
+[`CITATION.cff`](https://github.com/intermodelvigorish/imvpy/blob/main/CITATION.cff)
+metadata directly.
 
 Also state which extension was used: vanilla IMV, exact SHAP-IMV, multiclass
 one-vs-rest/pairwise IMV, or directional ablation IMV. Extensions should not be
@@ -26,7 +30,7 @@ attributed to the original paper unless that source explicitly implements them.
 Use the repository URL for software provenance:
 
 ```text
-https://github.com/intermodelvigorish/PyIMV
+https://github.com/intermodelvigorish/imvpy
 ```
 
 For archival publication, cite a tagged release or immutable commit in addition

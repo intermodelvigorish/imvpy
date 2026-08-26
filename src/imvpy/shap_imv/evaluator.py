@@ -5,7 +5,7 @@ This module implements SHAP-IMV (Shapley-based InterModel Vigorish)
 framework for evaluating feature importance in binary classification models.
 It combines information theory and game theory to provide interpretable feature attributions.
 
-All core IMV computations (ll, get_w, calculate_imv) are imported from imv.core module,
+All core IMV computations (ll, get_w, calculate_imv) are imported from imvpy.core,
 eliminating code duplication across the package.
 
 """
@@ -54,7 +54,7 @@ class BinaryIMV:
     from adding features to a model. It supports binary classification with
     k-fold cross-validation or train-test split evaluation strategies.
     
-    Core IMV functions (ll, get_w, calculate_imv) are imported from imv.core module,
+    Core IMV functions (ll, get_w, calculate_imv) are imported from imvpy.core,
     ensuring consistency across all IMV implementations.
     
     Args:
@@ -80,7 +80,7 @@ class BinaryIMV:
         
     Examples:
         >>> from sklearn.linear_model import LogisticRegression
-        >>> from imv import BinaryIMV
+        >>> from imvpy import BinaryIMV
         >>> 
         >>> evaluator = BinaryIMV(
         ...     data=df,
@@ -140,7 +140,7 @@ class BinaryIMV:
         """
         Calculate IMV score comparing two trained models.
         
-        Uses the shared calculate_imv() function from imv.core module.
+        Uses the shared calculate_imv() function from imvpy.core.
         Computes IMV by comparing predictions from a basic model (intercept-only)
         and an enhanced binary classifier (with features).
         

@@ -2,7 +2,7 @@
 
 ## Evaluator
 
-::: imv.shap_imv.BinaryIMV
+::: imvpy.shap_imv.BinaryIMV
     options:
       members:
         - calculate_imv_score
@@ -15,11 +15,10 @@
 
 ## Incomplete coalition warning
 
-::: imv.shap_imv.IncompleteCoalitionWarning
+::: imvpy.shap_imv.IncompleteCoalitionWarning
     options:
       members: false
 
 `IMVEvaluator` is an identity alias of `BinaryIMV`. It is documented in
 [Compatibility](../reference/compatibility.md) but should not be used in new
 code.
-

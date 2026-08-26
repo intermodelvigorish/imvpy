@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from imv.core import (
+from imvpy.core import (
     BelowChanceLikelihoodWarning,
     calculate_imv,
     get_w,
@@ -14,7 +14,7 @@ from imv.core import (
     ll,
     vanilla_imv,
 )
-from imv.utils.core import DEFAULT_UPPER_BOUND
+from imvpy.utils.core import DEFAULT_UPPER_BOUND
 
 
 def test_ll_matches_clipped_likelihood_formula():
@@ -216,10 +216,10 @@ def test_only_true_scalar_predictions_are_broadcast():
 
 
 def test_vanilla_functions_are_available_from_the_top_level_package():
-    import imv
+    import imvpy
 
-    assert imv.vanilla_imv is vanilla_imv
-    assert imv.imv_from_likelihoods is imv_from_likelihoods
+    assert imvpy.vanilla_imv is vanilla_imv
+    assert imvpy.imv_from_likelihoods is imv_from_likelihoods
 
 
 def test_below_chance_likelihood_is_nan_not_the_lower_bound():

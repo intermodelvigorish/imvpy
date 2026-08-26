@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from imv import MulticlassIMV
+from imvpy import MulticlassIMV
 
 iris = load_iris(as_frame=True)
 features = list(iris.data.columns)
@@ -112,7 +112,7 @@ The class plotting methods use generic `Outcome1`, `Outcome2`, and so on. For
 explicit labels and shared styling, prefer the package-level helpers:
 
 ```python
-from imv.utils import plot_imv_heatmap, plot_ova_boxplot
+from imvpy.utils import plot_imv_heatmap, plot_ova_boxplot
 
 figure, axis = plot_imv_heatmap(mean_matrix, title="Iris pairwise IMV")
 figure_ova, axis_ova = plot_ova_boxplot(
@@ -120,4 +120,3 @@ figure_ova, axis_ova = plot_ova_boxplot(
     labels=[str(label) for label in mean_matrix.columns],
 )
 ```
-

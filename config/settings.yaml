@@ -1,4 +1,4 @@
-# IMV 1.2.0 settings reference.
+# IMVpy 1.2.0 settings reference.
 # This file documents package defaults and reproducibility profiles. The current
 # API does not automatically load this file; pass values explicitly in Python.
 

@@ -22,7 +22,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from imv import BinaryIMV
+from imvpy import BinaryIMV
 
 X, y = make_classification(
     n_samples=500,
@@ -115,7 +115,7 @@ valid Shapley value and should not be reported.
 ```python
 from pathlib import Path
 
-from imv.utils import save_figure
+from imvpy.utils import save_figure
 
 figure, axis = evaluator.evaluate_imvshapley(figsize=(10, 4))
 paths = save_figure(figure, Path("outputs") / "shap_imv")

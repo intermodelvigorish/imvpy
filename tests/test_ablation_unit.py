@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from imv import AblationIMV
+from imvpy import AblationIMV
 
 
 def frame(y, p):

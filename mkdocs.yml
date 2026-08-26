@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
-site_name: PyIMV
+site_name: IMVpy
 site_description: InterModel Vigorish for probabilistic model comparison and attribution
-site_url: https://intermodelvigorish.github.io/PyIMV/
-repo_url: https://github.com/intermodelvigorish/PyIMV
-repo_name: intermodelvigorish/PyIMV
+site_url: https://intermodelvigorish.github.io/imvpy/
+repo_url: https://github.com/intermodelvigorish/imvpy
+repo_name: intermodelvigorish/imvpy
 edit_uri: edit/main/documentation/
 docs_dir: documentation
 site_dir: site

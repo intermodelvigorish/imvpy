@@ -30,7 +30,7 @@ Record at minimum:
 
 ```bash
 python --version
-python -c "import os, imv; print(imv.__version__, os.path.relpath(imv.__file__))"
+python -c "import os, imvpy; print(imvpy.__version__, os.path.relpath(imvpy.__file__))"
 python -m pip freeze
 ```
 

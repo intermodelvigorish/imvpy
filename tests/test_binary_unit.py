@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LogisticRegression
 
-from imv import BinaryIMV
+from imvpy import BinaryIMV
 
 
 def make_data(n=60):
@@ -39,7 +39,7 @@ def test_constructor_does_not_mutate_caller_and_validates_schema():
 
 
 def test_incomplete_coalitions_warn_and_do_not_rescale_weights():
-    from imv import IncompleteCoalitionWarning
+    from imvpy import IncompleteCoalitionWarning
 
     ev = evaluator(make_data())
     full = ev.run_evaluation()

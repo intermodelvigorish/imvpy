@@ -1,25 +1,43 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "imv"
+name = "imvpy"
 version = "1.2.0"
-description = "InterModel Vigorish for probabilistic model comparison and feature attribution"
-readme = "README.md"
+description = "InterModel Vigorish for probabilistic model comparison and attribution"
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Valler Y."}]
+maintainers = [{name = "Charles Rahal"}]
+keywords = [
+  "ablation",
+  "classification",
+  "feature attribution",
+  "intermodel vigorish",
+  "machine learning",
+  "model comparison",
+  "predictive accuracy",
+  "shapley values",
+]
 classifiers = [
   "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
   "numpy>=1.23",
@@ -36,26 +54,43 @@ dependencies = [
 [project.optional-dependencies]
 progress = ["tqdm-joblib>=0.0.4"]
 deep-learning = ["torch>=2"]
-test = ["pytest>=7", "pytest-cov>=4", "pyyaml>=6"]
+test = [
+  "pytest>=7",
+  "pytest-cov>=4",
+  "pyyaml>=6",
+  "tomli>=2; python_version < '3.11'",
+]
 docs = [
   "mkdocs>=1.6,<2",
   "mkdocs-material>=9.5,<10",
   "mkdocstrings[python]>=0.30,<1",
 ]
-dev = [
-  "imv[progress,test,docs]",
+release = [
   "build>=1",
+  "check-manifest>=0.50",
+  "check-wheel-contents>=0.6",
+  "twine>=6",
+]
+dev = [
+  "imvpy[progress,test,docs,release]",
   "ruff>=0.5",
-  "mypy>=1.8",
 ]
 
 [project.urls]
-Documentation = "https://intermodelvigorish.github.io/PyIMV/"
-Repository = "https://github.com/intermodelvigorish/PyIMV"
-Issues = "https://github.com/intermodelvigorish/PyIMV/issues"
+Homepage = "https://github.com/intermodelvigorish/imvpy"
+Documentation = "https://intermodelvigorish.github.io/imvpy/"
+Repository = "https://github.com/intermodelvigorish/imvpy"
+Issues = "https://github.com/intermodelvigorish/imvpy/issues"
+Changelog = "https://github.com/intermodelvigorish/imvpy/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = false
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["imvpy*"]
+namespaces = false
 
 [tool.pytest.ini_options]
 addopts = "-ra"
@@ -63,7 +98,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.coverage.run]
-source = ["src/imv"]
+source = ["src/imvpy"]
 
 [tool.coverage.report]
 show_missing = true
@@ -83,3 +118,10 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/test_core_unit.py" = ["B905"]
+
+[tool.check-manifest]
+ignore = [
+  ".github/**",
+  ".gitignore",
+  "environment.yml",
+]

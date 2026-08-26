@@ -3,8 +3,8 @@
 ## Development setup
 
 ```bash
-git clone https://github.com/intermodelvigorish/PyIMV.git
-cd PyIMV
+git clone https://github.com/intermodelvigorish/imvpy.git
+cd imvpy
 python -m pip install -e ".[dev]"
 ```
 
@@ -14,10 +14,10 @@ The editable install is required because the package uses a `src/` layout.
 
 | Path | Purpose |
 |---|---|
-| `src/imv/utils` | Canonical metric and shared plotting implementations |
-| `src/imv/shap_imv` | Exact binary SHAP-IMV evaluator |
-| `src/imv/multi_imv` | One-vs-rest and pairwise multiclass evaluator |
-| `src/imv/ablation_imv` | PyTorch helper and directional matrix calculation |
+| `src/imvpy/utils` | Canonical metric and shared plotting implementations |
+| `src/imvpy/shap_imv` | Exact binary SHAP-IMV evaluator |
+| `src/imvpy/multi_imv` | One-vs-rest and pairwise multiclass evaluator |
+| `src/imvpy/ablation_imv` | PyTorch helper and directional matrix calculation |
 | `documentation` | Authored MkDocs sources |
 | `config/settings.yaml` | Machine-readable default and profile reference |
 | `tests` | Unit, integration, repository, settings, and documentation contracts |
@@ -28,9 +28,12 @@ Run all merge gates before submitting a change:
 
 ```bash
 ruff check .
-pytest
-mkdocs build --strict
+python -m pytest --quiet --cov=src/imvpy --cov-report=term-missing
+mkdocs build --strict --quiet
+check-manifest
 python -m build
+python -m twine check --strict dist/*
+check-wheel-contents dist/*.whl
 ```
 
 The package test suite is self-contained and does not require network access.
@@ -62,6 +65,9 @@ imports rather than copied versions of metric functions.
 
 Build in strict mode. Generated HTML under `site/` is ignored and must not be
 committed.
+
+Release preparation and Trusted Publishing setup are documented in
+[`RELEASING.md`](https://github.com/intermodelvigorish/imvpy/blob/main/RELEASING.md).
 
 ## Style
 

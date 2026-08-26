@@ -6,7 +6,7 @@ three or more classes. It provides two evaluation approaches:
 1. One-vs-All IMV: Measures information gain for each class vs all others
 2. Pairwise IMV Matrix: Creates a confusion-matrix-style IMV comparison between class pairs
 
-All core IMV computations (ll, get_w) are imported from imv.core module,
+All core IMV computations (ll, get_w) are imported from imvpy.core,
 eliminating code duplication across the package.
 
 """
@@ -100,7 +100,7 @@ class MulticlassIMV:
         )
         return splitter.split(self.data)
 
-    # Note: ll() and get_w() are now imported from imv.core
+    # Note: ll() and get_w() are imported from imvpy.core.
     # No need to redefine them here - this eliminates code duplication!
 
     @staticmethod

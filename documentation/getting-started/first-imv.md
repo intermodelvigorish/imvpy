@@ -6,7 +6,7 @@ prediction, observation-level enhanced predictions, and binary outcomes.
 ```python
 import numpy as np
 
-from imv import ll, vanilla_imv
+from imvpy import ll, vanilla_imv
 
 observed = np.array([
     0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
@@ -44,7 +44,7 @@ assert from_probabilities == from_likelihoods
 Use the explicit names when call-site clarity matters:
 
 ```python
-from imv import imv_from_likelihoods, imv_from_probs
+from imvpy import imv_from_likelihoods, imv_from_probs
 
 imv_from_probs(0.55, enhanced, observed)
 imv_from_likelihoods(ll(observed, 0.55), ll(observed, enhanced))
@@ -78,4 +78,3 @@ same rows and outcomes in the same order for both models. Report the baseline,
 split procedure, seed, estimator, calibration procedure, and package version.
 See [Statistical Practice](../concepts/statistical-practice.md) for the full
 checklist.
-

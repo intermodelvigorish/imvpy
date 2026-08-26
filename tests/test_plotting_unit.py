@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from imv.utils import (
+from imvpy.utils import (
     FIGURE_DPI,
     FIGURE_FORMATS,
     plot_ablation_matrix,

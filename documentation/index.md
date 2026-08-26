@@ -1,6 +1,6 @@
-# IMV
+# IMVpy
 
-`imv` implements InterModel Vigorish for binary probabilistic predictions and
+IMVpy implements InterModel Vigorish for binary probabilistic predictions and
 three model-comparison workflows built on the same metric:
 
 | Workflow | Question answered | Entry point |
@@ -14,8 +14,14 @@ The package consumes probabilities, not hard labels. Its canonical calculation i
 model-agnostic and accepts NumPy arrays, pandas Series, Python sequences, and
 numeric scalars where a constant prediction is meaningful.
 
+Install the `imvpy` distribution from PyPI:
+
+```bash
+python -m pip install imvpy
+```
+
 ```python
-from imv import vanilla_imv
+from imvpy import vanilla_imv
 
 score = vanilla_imv(
     baseline=0.5,
@@ -51,6 +57,6 @@ decisions.
 
 ## Package version
 
-This documentation describes `imv` 1.2.0. The package version, documented
-defaults, and Python signatures are checked against one another in the test
-suite.
+This documentation tracks the current `imvpy` release. The package version,
+documented defaults, and Python signatures are checked against one another in
+the test suite.

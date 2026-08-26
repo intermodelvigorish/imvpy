@@ -2,19 +2,22 @@
 
 ## Requirements
 
-`imv` supports Python 3.9 through 3.12. The base installation includes NumPy,
+IMVpy supports Python 3.9 and newer. The base installation includes NumPy,
 pandas, SciPy, scikit-learn, Matplotlib, seaborn, joblib, and tqdm.
 
-From a clone of the repository, install the package itself before importing it.
-The project uses a `src/` layout, so adding only the repository root to
-`PYTHONPATH` is not a supported installation.
+Install the released distribution from PyPI:
 
 ```bash
-python -m pip install .
-python -c "import os, imv; print(imv.__version__, os.path.relpath(imv.__file__))"
+python -m pip install imvpy
+python -c "import imvpy; print(imvpy.__version__)"
 ```
 
-Use editable mode while changing the package:
+The project is branded IMVpy, while both the distribution and import package
+use the normalized lowercase name `imvpy`.
+
+Use editable mode when working from a clone. The project uses a `src/` layout,
+so adding only the repository root to `PYTHONPATH` is not a supported
+installation:
 
 ```bash
 python -m pip install -e ".[dev]"
@@ -24,15 +27,16 @@ python -m pip install -e ".[dev]"
 
 | Extra | Install command | Purpose |
 |---|---|---|
-| Base | `python -m pip install .` | Core metric, evaluators, and plotting |
-| Progress | `python -m pip install ".[progress]"` | joblib-aware coalition progress |
-| Deep learning | `python -m pip install ".[deep-learning]"` | PyTorch training and BERT layer surgery |
+| Base | `python -m pip install imvpy` | Core metric, evaluators, and plotting |
+| Progress | `python -m pip install "imvpy[progress]"` | joblib-aware coalition progress |
+| Deep learning | `python -m pip install "imvpy[deep-learning]"` | PyTorch training and BERT layer surgery |
 | Tests | `python -m pip install ".[test]"` | pytest and contract-test dependencies |
 | Documentation | `python -m pip install -e ".[docs]"` | MkDocs site build |
-| Development | `python -m pip install -e ".[dev]"` | Tests, docs, lint, and build tools |
+| Release | `python -m pip install -e ".[release]"` | build and distribution validation tools |
+| Development | `python -m pip install -e ".[dev]"` | All contributor tools |
 
 PyTorch is lazy-loaded. Calling `vanilla_imv`, computing an ablation matrix from
-saved prediction frames, or importing `imv` does not require the deep-learning
+saved prediction frames, or importing `imvpy` does not require the deep-learning
 extra. Constructing `AblationIMV`, calling its seed/training methods, or reducing
 BERT layers does.
 
@@ -41,7 +45,7 @@ BERT layers does.
 ```bash
 python -m pip install -e ".[docs]"
 mkdocs serve
-mkdocs build --strict
+mkdocs build --strict --quiet
 ```
 
 `mkdocs serve` exposes a local development site at `http://127.0.0.1:8000`.
@@ -55,7 +59,7 @@ The repository also provides a Miniforge-compatible environment:
 
 ```bash
 conda env create -f environment.yml
-conda activate imv
+conda activate imvpy
 ```
 
 `pyproject.toml` remains authoritative for package dependency ranges.

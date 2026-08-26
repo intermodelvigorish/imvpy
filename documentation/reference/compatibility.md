@@ -3,12 +3,15 @@
 ## Recommended imports
 
 New code should import public metric functions and evaluator classes from the
-package root, and plotting helpers from `imv.utils`:
+package root, and plotting helpers from `imvpy.utils`:
 
 ```python
-from imv import AblationIMV, BinaryIMV, MulticlassIMV, vanilla_imv
-from imv.utils import plot_imv_heatmap, save_figure
+from imvpy import AblationIMV, BinaryIMV, MulticlassIMV, vanilla_imv
+from imvpy.utils import plot_imv_heatmap, save_figure
 ```
+
+IMVpy installs only the `imvpy` namespace. It deliberately provides no `imv`
+namespace alias, avoiding ambiguity with unrelated distributions.
 
 ## Legacy modules and aliases
 
@@ -16,16 +19,16 @@ The following imports remain valid for legacy and pre-2.0 compatibility:
 
 | Legacy import | Canonical object |
 |---|---|
-| `from imv.binary import BinaryIMV` | `imv.BinaryIMV` |
-| `from imv.binary import IMVEvaluator` | Identity alias of `imv.BinaryIMV` |
-| `from imv.multiclass import MulticlassIMV` | `imv.MulticlassIMV` |
-| `from imv.multiclass import MultinomialIMV` | Identity alias of `imv.MulticlassIMV` |
-| `from imv.ablation import AblationIMV` | `imv.AblationIMV` |
-| `from imv.core import calculate_imv` | `imv.calculate_imv` |
+| `from imvpy.binary import BinaryIMV` | `imvpy.BinaryIMV` |
+| `from imvpy.binary import IMVEvaluator` | Identity alias of `imvpy.BinaryIMV` |
+| `from imvpy.multiclass import MulticlassIMV` | `imvpy.MulticlassIMV` |
+| `from imvpy.multiclass import MultinomialIMV` | Identity alias of `imvpy.MulticlassIMV` |
+| `from imvpy.ablation import AblationIMV` | `imvpy.AblationIMV` |
+| `from imvpy.core import calculate_imv` | `imvpy.calculate_imv` |
 | `AblationIMV.ll`, `.get_w`, `.calculate_imv` | Static aliases of core functions |
 | `MulticlassIMV.ll`, `.get_w` | Static aliases of core functions |
 
-`imv.core.minimize_me` is retained as the objective used by the legacy optimizer
+`imvpy.core.minimize_me` is retained as the objective used by the legacy optimizer
 but is not a recommended public workflow.
 
 ## Historical names
@@ -68,6 +71,6 @@ intentional correctness changes.
 
 ## Version support
 
-The package declares Python 3.9 through 3.12 support. Compatibility aliases are
+The package declares Python 3.9 through 3.14 support. Compatibility aliases are
 preserved for the current major version; a future removal should be announced in
 release notes and accompanied by a deprecation period.

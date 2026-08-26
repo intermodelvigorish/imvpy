@@ -9,7 +9,7 @@ the same outcomes.
 import numpy as np
 import pandas as pd
 
-from imv import vanilla_imv
+from imvpy import vanilla_imv
 
 outcomes = pd.Series([1, 0, 1, 0, 1, 0])
 baseline = 0.5
@@ -25,7 +25,7 @@ observation-level predictions, pass two equal-length vectors instead.
 The following names are equivalent in probability mode:
 
 ```python
-from imv import calculate_imv, imv_from_probs
+from imvpy import calculate_imv, imv_from_probs
 
 assert score == calculate_imv(baseline, enhanced, outcomes)
 assert score == imv_from_probs(baseline, enhanced, outcomes)
@@ -37,7 +37,7 @@ If only the geometric mean likelihood from `ll` has been retained, use the
 explicit likelihood function:
 
 ```python
-from imv import imv_from_likelihoods, ll
+from imvpy import imv_from_likelihoods, ll
 
 a0 = ll(outcomes, baseline)
 a1 = ll(outcomes, enhanced)
@@ -53,7 +53,7 @@ interpreted as two prediction vectors.
 ## Inspect the transformation
 
 ```python
-from imv import get_w
+from imvpy import get_w
 
 w0 = get_w(a0)
 w1 = get_w(a1)
@@ -75,7 +75,7 @@ identify below-chance or calibration failures.
 ```python
 import warnings
 
-from imv import BelowChanceLikelihoodWarning, information_deficit
+from imvpy import BelowChanceLikelihoodWarning, information_deficit
 
 bad_likelihood = 0.1
 print(information_deficit(bad_likelihood))
@@ -117,4 +117,3 @@ functions intentionally use the current full representable range.
 
 Violations raise `TypeError` or `ValueError` rather than being coerced into an
 ambiguous comparison.
-

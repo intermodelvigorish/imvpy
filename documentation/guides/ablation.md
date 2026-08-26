@@ -11,7 +11,7 @@ Matrix scoring is static and does not require constructing `AblationIMV`:
 ```python
 import pandas as pd
 
-from imv import AblationIMV
+from imvpy import AblationIMV
 
 predictions = {
     "Full": pd.DataFrame({
@@ -73,11 +73,11 @@ initialization and minibatch order.
 
 ## PyTorch training helper
 
-Install `imv[deep-learning]`, then construct the evaluator. Device priority is
+Install `imvpy[deep-learning]`, then construct the evaluator. Device priority is
 CUDA, Apple MPS, then CPU.
 
 ```python
-from imv import AblationIMV
+from imvpy import AblationIMV
 
 ablator = AblationIMV(random_seed=42)
 result = ablator.train_and_evaluate(
@@ -128,7 +128,7 @@ transformer families need architecture-specific surgery.
 ## Plot and export
 
 ```python
-from imv.utils import plot_ablation_matrix, save_figure
+from imvpy.utils import plot_ablation_matrix, save_figure
 
 figure, axis = plot_ablation_matrix(mean_matrix)
 paths = save_figure(figure, "outputs/ablation_matrix")

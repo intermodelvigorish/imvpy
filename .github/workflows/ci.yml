@@ -3,15 +3,25 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
         with:
-          python-version: "3.11"
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
           cache: pip
       - run: python -m pip install ruff
       - run: ruff check .
@@ -21,39 +31,71 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install ".[test]"
-      - run: python -m pytest --cov=src/imv --cov-report=term-missing
+      - run: python -m pip check
+      - run: python -m pytest --quiet --cov=src/imvpy --cov-report=term-missing
 
-  build:
+  deep-learning:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
         with:
-          python-version: "3.11"
-      - run: python -m pip install build twine
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install ".[test,deep-learning]"
+      - run: python -m pip check
+      - run: python -m pytest --quiet tests/test_ablation_torch.py
+
+  build:
+    needs: [lint, test, deep-learning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install build check-manifest check-wheel-contents twine
+      - run: check-manifest
       - run: python -m build
-      - run: python -m twine check dist/*
-      # A wheel that imports on a clean interpreter is the real release gate:
-      # it catches a module left out of the src layout that tests never notice.
-      - run: python -m pip install dist/*.whl
-      - run: python -c "import imv; print(imv.__version__)"
+      - run: python -m twine check --strict dist/*
+      - run: check-wheel-contents dist/*.whl
+      - run: python -m pip install --force-reinstall dist/*.whl
+      - run: python -m pip check
+      - run: python -c "import imvpy; from importlib.metadata import version; assert imvpy.__version__ == version('imvpy')"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: python-package-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
 
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
         with:
-          python-version: "3.11"
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
           cache: pip
       - run: python -m pip install ".[docs]"
-      - run: mkdocs build --strict
+      - run: mkdocs build --strict --quiet

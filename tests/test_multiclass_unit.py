@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LogisticRegression
 
-from imv import MulticlassIMV
+from imvpy import MulticlassIMV
 
 
 def creator():

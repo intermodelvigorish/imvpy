@@ -7,7 +7,7 @@ publication figures.
 ## Heatmaps
 
 ```python
-from imv.utils import plot_ablation_matrix, plot_imv_heatmap
+from imvpy.utils import plot_ablation_matrix, plot_imv_heatmap
 
 figure, axis = plot_imv_heatmap(
     matrix,
@@ -25,7 +25,7 @@ supplies labels from its columns automatically; otherwise provide `labels`.
 ## One-vs-rest distributions
 
 ```python
-from imv.utils import plot_ova_boxplot
+from imvpy.utils import plot_ova_boxplot
 
 figure, axis = plot_ova_boxplot(
     fold_scores,
@@ -56,7 +56,7 @@ provided, they return that axis.
 ## Publication export
 
 ```python
-from imv.utils import FIGURE_DPI, FIGURE_FORMATS, save_figure
+from imvpy.utils import FIGURE_DPI, FIGURE_FORMATS, save_figure
 
 paths = save_figure(figure, "artifacts/result.png")
 
