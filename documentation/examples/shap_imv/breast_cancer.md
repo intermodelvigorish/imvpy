@@ -18,7 +18,7 @@ used: `radius1`, `texture1`, `smoothness1`, `compactness1`, `symmetry1`, and
 for UCI mirrors with different column names.
 
 Inputs are converted to numeric, incomplete rows are removed, and features are
-standardized. The dataset is below the 4,000-row demonstration cap. As in the
+standardized. The example runs on the full 569 rows; there is no row cap. As in the
 other tabular examples, scaling occurs before cross-validation for readability;
 fit it inside a pipeline for leakage-free research.
 

@@ -28,7 +28,6 @@ are relativized before they reach notebook output.
 | `shap_imv_adult_income.ipynb` | UCI id 2 | ~80 s |
 | `shap_imv_titanic.ipynb` | OpenML `titanic` v1 | ~60 s |
 | `shap_imv_breast_cancer.ipynb` | UCI id 17 | ~60 s |
-| `shap_imv_wine_quality.ipynb` | UCI id 186 | ~80 s |
 
 ## Multiclass (`multi_imv/`)
 
@@ -88,7 +87,6 @@ outputs without re-running anything.
 | Adult Income | `income == ">50K"`, after stripping the trailing `.` UCI's test file adds | 4 supplied numerics + `sex_female` and `married` derived |
 | Titanic | `survived` | `Age`/`Fare` median-imputed; `AgeClass` interaction; `Title` from the name field |
 | Breast Cancer | diagnosis `== "M"` | 6 of 30 columns (the least collinear "mean" measurements) |
-| Wine Quality | `quality >= 6` — a stated choice, not a property of the data | 6 of 11 chemical properties; red and white pooled |
 | Nursery | 3 of 5 classes; `recommend` (2 rows) and `very_recom` (328) dropped | all 8 categoricals → integer codes |
 | Car Evaluation | 4 classes in explicit order `unacc < acc < good < vgood` | all 6 categoricals → integer codes |
 | Dry Bean | 7 classes, alphabetical (no natural order) | all 16 numerics standardised |

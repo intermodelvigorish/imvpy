@@ -19,8 +19,9 @@ integer-mapped. Titles are parsed from names, rare titles are pooled, and the
 title ordering is explicitly the notebook authors' choice because the published
 encoding was not recorded.
 
-Rows are numeric and complete after these transformations. The 4,000-row cap is
-inactive for this dataset. Features are standardized before splitting, which
+Rows are numeric and complete after these transformations. The example runs on
+the full 1,309 rows; there is no row cap. Features are standardized before
+splitting, which
 leaks aggregate held-out statistics; a new analysis should fit imputation,
 encoding, and scaling within each fold.
 

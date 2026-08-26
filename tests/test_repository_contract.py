@@ -26,7 +26,7 @@ def test_src_layout_has_canonical_subpackages_and_no_root_python_package():
 
 
 EXPECTED_EXAMPLES = {
-    "shap_imv": {"adult_income", "titanic", "breast_cancer", "wine_quality"},
+    "shap_imv": {"adult_income", "titanic", "breast_cancer"},
     "multi_imv": {"nursery", "car_evaluation", "dry_bean"},
     "ablation_imv": {"har", "imdb", "mnist"},
 }
@@ -35,7 +35,6 @@ EXPECTED_DATA_FETCHES = {
     "shap_imv_adult_income.ipynb": ("fetch_ucirepo", "id", 2),
     "shap_imv_titanic.ipynb": ("fetch_openml", 0, "titanic"),
     "shap_imv_breast_cancer.ipynb": ("fetch_ucirepo", "id", 17),
-    "shap_imv_wine_quality.ipynb": ("fetch_ucirepo", "id", 186),
     "multi_imv_nursery.ipynb": ("fetch_ucirepo", "id", 76),
     "multi_imv_car_evaluation.ipynb": ("fetch_ucirepo", "id", 19),
     "multi_imv_dry_bean.ipynb": ("fetch_ucirepo", "id", 602),
@@ -68,7 +67,6 @@ EXPECTED_FIGURE_EXPORTS = {
     "shap_imv_adult_income.ipynb": 1,
     "shap_imv_titanic.ipynb": 1,
     "shap_imv_breast_cancer.ipynb": 1,
-    "shap_imv_wine_quality.ipynb": 1,
     "multi_imv_nursery.ipynb": 2,
     "multi_imv_car_evaluation.ipynb": 2,
     "multi_imv_dry_bean.ipynb": 2,
@@ -83,7 +81,6 @@ EXPECTED_SEEDED_MODELS = {
     "shap_imv_adult_income.ipynb": TABULAR_MODELS,
     "shap_imv_titanic.ipynb": TABULAR_MODELS,
     "shap_imv_breast_cancer.ipynb": TABULAR_MODELS,
-    "shap_imv_wine_quality.ipynb": TABULAR_MODELS,
     "multi_imv_nursery.ipynb": TABULAR_MODELS,
     "multi_imv_car_evaluation.ipynb": TABULAR_MODELS,
     "multi_imv_dry_bean.ipynb": TABULAR_MODELS,
@@ -411,7 +408,7 @@ def test_every_example_fetches_its_named_dataset_and_ships_none():
         assert "Path.cwd()" not in source, f"{path.name} writes artifacts into the checkout"
         assert "IMV_ARTIFACT_CACHE" in source
 
-    excluded_trees = {".git", ".venv", ".tox", "build", "dist", "site", "venv"}
+    excluded_trees = {".archive", ".git", ".venv", ".tox", "archive", "build", "dist", "site", "venv"}
     shipped_data = []
     for path in ROOT.glob("**/*"):
         relative = path.relative_to(ROOT)

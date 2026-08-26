@@ -10,7 +10,6 @@ tables and figures.
 | Exact SHAP-IMV | Adult Income | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/shap_imv/shap_imv_adult_income.ipynb) |
 | Exact SHAP-IMV | Titanic | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/shap_imv/shap_imv_titanic.ipynb) |
 | Exact SHAP-IMV | Breast Cancer | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/shap_imv/shap_imv_breast_cancer.ipynb) |
-| Exact SHAP-IMV | Wine Quality | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/shap_imv/shap_imv_wine_quality.ipynb) |
 | Multiclass | Nursery | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/multi_imv/multi_imv_nursery.ipynb) |
 | Multiclass | Car Evaluation | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/multi_imv/multi_imv_car_evaluation.ipynb) |
 | Multiclass | Dry Bean | Logistic regression, XGBoost, LightGBM | [Open notebook](https://github.com/intermodelvigorish/imv_ml_package/blob/main/examples/multi_imv/multi_imv_dry_bean.ipynb) |

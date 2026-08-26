@@ -388,7 +388,6 @@ generating code in the original research notebooks.
 | `shap_imv_adult_income.ipynb` | income > 50K | 6 demographic / human-capital | UCI id 2 |
 | `shap_imv_titanic.ipynb` | survived | 6 incl. `Title` from the name field | OpenML `titanic` v1 |
 | `shap_imv_breast_cancer.ipynb` | malignant | 6 least-collinear "mean" measurements | UCI id 17 |
-| `shap_imv_wine_quality.ipynb` | `quality >= 6` | 6 chemical properties | UCI id 186 |
 
 Feature counts are capped deliberately: exact SHAP-IMV costs
 `2**n_features * n_splits * 2` fits per seed per estimator.

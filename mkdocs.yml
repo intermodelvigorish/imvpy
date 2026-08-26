@@ -47,7 +47,6 @@ nav:
           - Adult Income: examples/shap_imv/adult_income.md
           - Titanic: examples/shap_imv/titanic.md
           - Breast Cancer: examples/shap_imv/breast_cancer.md
-          - Wine Quality: examples/shap_imv/wine_quality.md
       - Multiclass:
           - Nursery: examples/multi_imv/nursery.md
           - Car Evaluation: examples/multi_imv/car_evaluation.md

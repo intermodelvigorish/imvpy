@@ -18,8 +18,10 @@ the binary target is `income == ">50K"`. The six-feature coalition universe is
 `age`, `education-num`, `hours-per-week`, `capital-gain`, `sex_female`, and
 `married`. The last two are derived from `sex` and `marital-status`.
 
-Columns are converted to numeric and incomplete rows are removed. A seeded,
-class-aware subsample caps the demonstration at 4,000 rows. Features are
+Columns are converted to numeric and incomplete rows are removed. The example
+runs on the full 48,842 rows; there is no row cap, because the cost of exact
+SHAP-IMV is set by the `2**n_features` coalition count rather than by the row
+count. Features are
 standardized before cross-validation so logistic regression converges. That
 aggregate scaling sees held-out rows and is disclosed optimistic leakage; new
 research should place `StandardScaler` inside each estimator pipeline.
