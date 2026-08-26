@@ -14,7 +14,7 @@ python -m pip install .
 python -c "import os, imv; print(imv.__version__, os.path.relpath(imv.__file__))"
 ```
 
-Use editable mode while changing the package or running repository notebooks:
+Use editable mode while changing the package:
 
 ```bash
 python -m pip install -e ".[dev]"
@@ -27,53 +27,14 @@ python -m pip install -e ".[dev]"
 | Base | `python -m pip install .` | Core metric, evaluators, and plotting |
 | Progress | `python -m pip install ".[progress]"` | joblib-aware coalition progress |
 | Deep learning | `python -m pip install ".[deep-learning]"` | PyTorch training and BERT layer surgery |
-| Notebooks | `python -m pip install ".[notebooks]"` | Jupyter execution tools |
-| Tabular examples | `python -m pip install ".[examples]"` | Seven tabular notebooks and downloaders |
-| All examples | `python -m pip install -r requirements.txt` | All ten notebooks, including deep learning |
 | Tests | `python -m pip install ".[test]"` | pytest and contract-test dependencies |
 | Documentation | `python -m pip install -e ".[docs]"` | MkDocs site build |
-| Development | `python -m pip install -e ".[dev]"` | Tests, docs, lint, build, and notebooks |
+| Development | `python -m pip install -e ".[dev]"` | Tests, docs, lint, and build tools |
 
 PyTorch is lazy-loaded. Calling `vanilla_imv`, computing an ablation matrix from
 saved prediction frames, or importing `imv` does not require the deep-learning
 extra. Constructing `AblationIMV`, calling its seed/training methods, or reducing
 BERT layers does.
-
-## Run the notebooks
-
-Install the complete notebook runtime from the repository root and start Jupyter:
-
-```bash
-python -m pip install -r requirements.txt
-jupyter lab examples/
-```
-
-To execute one notebook non-interactively:
-
-```bash
-jupyter nbconvert --execute --to notebook --inplace \
-  examples/shap_imv/shap_imv_adult_income.ipynb
-```
-
-Every notebook verifies that `imv.__file__` resolves to this checkout's
-`src/imv`. This prevents an older globally installed release from silently
-producing the results. Package, cache, dataset, warning, and figure locations in
-notebook output are always rendered relative to their documented anchor; local
-absolute paths are never embedded in the committed notebooks.
-
-## Data and artifact locations
-
-No dataset is stored in the repository. Notebooks download on demand and use
-external cache directories:
-
-| Environment variable | Default | Contents |
-|---|---|---|
-| `IMV_CACHE_HOME` | `~/.cache/imv` | Parent cache directory |
-| `IMV_DATA_CACHE` | `$IMV_CACHE_HOME/datasets` | Downloaded public datasets |
-| `IMV_ARTIFACT_CACHE` | `$IMV_CACHE_HOME/notebook_artifacts` | CSVs, restart predictions, and figures |
-
-Each figure is exported to the artifact cache as PNG at 800 DPI and as PDF and
-SVG. Only the executed notebooks, with their rendered outputs, are committed.
 
 ## Build the documentation
 

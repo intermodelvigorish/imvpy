@@ -1,8 +1,8 @@
 # Plotting and Export
 
 The shared plotting functions accept either an existing Matplotlib axis or
-create a new figure. This makes the same function suitable for notebooks and
-multi-panel publication figures.
+create a new figure. This supports both interactive use and multi-panel
+publication figures.
 
 ## Heatmaps
 
@@ -78,7 +78,5 @@ PNG is written at 800 DPI. The DPI is also passed to PDF and SVG so rasterized
 artists inside vector figures use the same resolution. Parent directories are
 created automatically, and the returned dictionary maps format name to `Path`.
 
-Repository notebooks send these files to `IMV_ARTIFACT_CACHE`; generated images
-are intentionally not committed because the executed notebooks already embed
-their rendered figures.
-
+The caller controls the output directory. Keep generated figures outside the
+package source tree unless they are intentional documentation assets.

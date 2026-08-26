@@ -18,16 +18,15 @@ print(imv.__version__)
 ```
 
 Also state which extension was used: vanilla IMV, exact SHAP-IMV, multiclass
-one-vs-rest/pairwise IMV, or directional ablation IMV. The extensions and example
-analyses should not be attributed to the original paper unless that source
-explicitly implements them.
+one-vs-rest/pairwise IMV, or directional ablation IMV. Extensions should not be
+attributed to the original paper unless that source explicitly implements them.
 
 ## Repository
 
 Use the repository URL for software provenance:
 
 ```text
-https://github.com/intermodelvigorish/imv_ml_package
+https://github.com/intermodelvigorish/PyIMV
 ```
 
 For archival publication, cite a tagged release or immutable commit in addition
@@ -36,7 +35,4 @@ to the repository landing page.
 ## License
 
 The package is distributed under the MIT License. See the repository `LICENSE`
-file for the full terms. Public datasets and pretrained models used by examples
-retain their own licenses and terms; downloading them through a notebook does not
-relicense them under MIT.
-
+file for the full terms.

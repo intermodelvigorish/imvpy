@@ -12,7 +12,7 @@ from imv.utils import plot_imv_heatmap, save_figure
 
 ## Legacy modules and aliases
 
-The following imports remain valid for notebook and pre-2.0 compatibility:
+The following imports remain valid for legacy and pre-2.0 compatibility:
 
 | Legacy import | Canonical object |
 |---|---|
@@ -61,7 +61,7 @@ Use `method="lbfgsb"` to reproduce the legacy optimizer. For direct calls to
 `get_w`, also pass `bounds=[(0.5, 0.999)]` when exact historical bound behavior
 is required. Record this choice; do not use it silently in new work.
 
-The current `ll` clips probabilities before logarithms. Early notebook code
+The current `ll` clips probabilities before logarithms. Early implementations
 added epsilon inside each logarithm, which could make a perfect predictor score
 slightly above one. Differences are normally on the order of epsilon but are
 intentional correctness changes.
@@ -71,4 +71,3 @@ intentional correctness changes.
 The package declares Python 3.9 through 3.12 support. Compatibility aliases are
 preserved for the current major version; a future removal should be announced in
 release notes and accompanied by a deprecation period.
-

@@ -36,55 +36,31 @@ dependencies = [
 [project.optional-dependencies]
 progress = ["tqdm-joblib>=0.0.4"]
 deep-learning = ["torch>=2"]
-notebooks = ["jupyter>=1", "nbclient>=0.8", "nbformat>=5.8"]
-# nbformat belongs here, not only in `notebooks`: the repository-contract tests
-# read the example notebooks, so `pip install .[test]` must be sufficient to run
-# the whole suite on its own.
-test = ["pytest>=7", "pytest-cov>=4", "pyyaml>=6", "nbformat>=5.8"]
-# What the tabular notebooks under examples/ need beyond the library itself:
-# the UCI/OpenML downloaders and the two boosted-tree families every example
-# compares against logistic regression.
-examples = [
-  "imv[notebooks,progress]",
-  "ucimlrepo>=0.0.3",
-  "xgboost>=2",
-  "lightgbm>=4",
-]
-# Deep-learning examples: MNIST/HAR use PyTorch; IMDb also needs Transformers/Datasets.
-examples-deep-learning = [
-  "imv[examples,deep-learning]",
-  "transformers>=4.40",
-  "datasets>=2.18",
-]
+test = ["pytest>=7", "pytest-cov>=4", "pyyaml>=6"]
 docs = [
   "mkdocs>=1.6,<2",
   "mkdocs-material>=9.5,<10",
   "mkdocstrings[python]>=0.30,<1",
 ]
 dev = [
-  "imv[progress,notebooks,test,docs]",
+  "imv[progress,test,docs]",
   "build>=1",
   "ruff>=0.5",
   "mypy>=1.8",
 ]
 
 [project.urls]
-Documentation = "https://intermodelvigorish.github.io/imv_ml_package/"
-Repository = "https://github.com/intermodelvigorish/imv_ml_package"
-Issues = "https://github.com/intermodelvigorish/imv_ml_package/issues"
+Documentation = "https://intermodelvigorish.github.io/PyIMV/"
+Repository = "https://github.com/intermodelvigorish/PyIMV"
+Issues = "https://github.com/intermodelvigorish/PyIMV/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-ra -m 'not slow and not network and not deep_learning'"
+addopts = "-ra"
 testpaths = ["tests"]
 pythonpath = ["src"]
-markers = [
-  "slow: research-scale or long-running test",
-  "network: test requiring network access",
-  "deep_learning: test requiring optional deep-learning dependencies",
-]
 
 [tool.coverage.run]
 source = ["src/imv"]
@@ -97,9 +73,7 @@ fail_under = 55
 line-length = 100
 target-version = "py39"
 src = ["src", "tests"]
-# Notebooks are executed research artifacts: they import per section by design
-# and their stored outputs are evidence, so linting them is noise.
-extend-exclude = ["examples", "archive", "build", "documentation"]
+extend-exclude = ["build", "documentation"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
@@ -108,10 +82,4 @@ select = ["E", "F", "I", "B", "UP"]
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
-# The three notebook-derived test scripts predate the fast unit suite. They
-# configure a headless matplotlib backend before importing anything that draws
-# (E402) and iterate paired sequences of known equal length (B905, B007).
-"tests/test_ablate_imv.py" = ["E402", "B905", "B007", "F841"]
-"tests/test_multi_imv.py" = ["E402", "B905", "B007", "F841"]
-"tests/test_shap_imv.py" = ["E402", "B905", "B007", "F841"]
 "tests/test_core_unit.py" = ["B905"]

@@ -89,7 +89,7 @@ def test_documentation_build_is_a_release_gate():
 
 
 def test_documentation_uses_only_relative_local_path_examples():
-    pages = [ROOT / "README.md", ROOT / "examples/README.md", *DOCS.rglob("*.md")]
+    pages = [ROOT / "README.md", *DOCS.rglob("*.md")]
     local_absolute_path = re.compile(
         r"(?<![A-Za-z0-9:/.<~])/(?!/)(?:[^/\s<>'\"]+/)+[^/\s<>'\"]*"
     )

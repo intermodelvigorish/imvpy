@@ -53,7 +53,7 @@ class MulticlassIMV:
     random_state : int, optional
         Random seed for reproducibility
     stratified : bool, default=False
-        False reproduces the original notebooks' shuffled ``KFold``. True selects
+        False preserves the legacy shuffled ``KFold`` behavior. True selects
         ``StratifiedKFold``, which is the right choice for a new analysis on
         imbalanced classes and guarantees no fold omits a class. Switching
         changes the result and must be reported.
@@ -61,7 +61,7 @@ class MulticlassIMV:
         Print per-fold progress and results.
     """
 
-    # Notebook-era compatibility while retaining one canonical implementation.
+    # Legacy API compatibility while retaining one canonical implementation.
     # These must stay below the docstring: a class body statement placed above a
     # string literal turns that literal into a no-op expression, leaving
     # ``MulticlassIMV.__doc__`` as None.

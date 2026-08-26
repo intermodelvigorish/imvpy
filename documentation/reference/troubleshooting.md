@@ -9,8 +9,8 @@ python -m pip install -e .
 python -c "import os, imv; print(os.path.relpath(imv.__file__))"
 ```
 
-If a notebook imports a different checkout or release, reinstall editable mode
-with the notebook kernel's Python executable and restart the kernel.
+If Python imports a different checkout or release, reinstall in editable mode
+with the interpreter used to run the analysis.
 
 ## PyTorch import error
 
@@ -20,8 +20,6 @@ training with `AblationIMV`, seeding, and BERT layer reduction do:
 ```bash
 python -m pip install ".[deep-learning]"
 ```
-
-Install `.[examples-deep-learning]` for all ablation notebook dependencies.
 
 ## `BelowChanceLikelihoodWarning` or `NaN`
 
@@ -66,22 +64,9 @@ package does not implement sampled coalition approximation.
 ## Deep-learning memory or runtime issues
 
 Reduce batch size, sample count, token length, epochs, or variant count for an
-exploratory run. Keep the final design identical across variants. Restartable
-example predictions live under `IMV_ARTIFACT_CACHE`; remove a single
-variant/seed file to rerun it after an interruption.
-
-## Unexpected artifact location
-
-Set cache variables before launching Jupyter:
-
-```bash
-export IMV_CACHE_HOME=../imv-cache
-export IMV_DATA_CACHE=../imv-data-cache
-export IMV_ARTIFACT_CACHE=../imv-artifacts
-```
-
-No notebook intentionally writes datasets, CSVs, or figure files into the
-repository.
+exploratory run. Keep the final design identical across variants. If callers
+cache predictions, include the package version, model configuration, and seed in
+cache keys and validate row alignment before reuse.
 
 ## Documentation build fails
 

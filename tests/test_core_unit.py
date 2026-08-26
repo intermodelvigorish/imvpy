@@ -23,10 +23,10 @@ def test_ll_matches_clipped_likelihood_formula():
     clipped = np.clip(p, 1e-9, 1 - 1e-9)
     expected = np.exp(np.mean(y * np.log(clipped) + (1-y) * np.log(1-clipped)))
     assert ll(y, p) == pytest.approx(expected, rel=1e-14)
-    # The notebook added epsilon inside the log instead of clipping; interior
+    # The legacy implementation added epsilon inside the log instead of clipping; interior
     # probabilities are untouched by clipping so the two agree to order epsilon.
-    notebook = np.exp(np.mean(y * np.log(p + 1e-9) + (1-y) * np.log(1-p + 1e-9)))
-    assert ll(y, p) == pytest.approx(notebook, rel=1e-8)
+    legacy = np.exp(np.mean(y * np.log(p + 1e-9) + (1-y) * np.log(1-p + 1e-9)))
+    assert ll(y, p) == pytest.approx(legacy, rel=1e-8)
 
 
 def test_ll_never_exceeds_one_and_accepts_any_valid_epsilon():
@@ -144,7 +144,7 @@ def test_calculate_imv_identity_alias_and_shape_validation():
         calculate_imv(p[:-1], p, y)
 
 
-def test_plos_toy_example_accepts_a_scalar_baseline():
+def test_published_scalar_baseline_case():
     """Reproduce S1-II.1 of Domingue, Rahal, et al. to six decimals."""
     outcomes = np.array([
         0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1,

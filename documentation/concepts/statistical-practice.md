@@ -69,11 +69,3 @@ Report all of the following with an IMV result:
 - Below-chance warnings or undefined values rather than silently removing them.
 - For SHAP-IMV, the complete feature universe and whether the full power set was
   evaluated.
-
-## Example limitations
-
-Repository notebooks are executable demonstrations, not benchmark claims or
-replications of every published analysis. Several tabular notebooks fit simple
-aggregate preprocessing before cross-validation to keep the examples readable;
-their pages disclose this optimistic leakage. New research should move that
-preprocessing into the estimator pipeline.

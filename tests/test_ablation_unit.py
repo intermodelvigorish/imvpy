@@ -24,7 +24,7 @@ def test_analysis_utilities_work_without_torch():
         AblationIMV.average_imv_matrices([])
 
 
-def test_notebook_compatibility_static_core_api():
+def test_legacy_static_core_api():
     y = np.array([0, 1])
     p = np.array([0.2, 0.8])
     assert AblationIMV.ll(y, p) > 0.5

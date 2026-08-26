@@ -63,7 +63,7 @@ class AblationIMV:
     instance or the ``deep-learning`` extra.
     """
 
-    # Notebook-era compatibility while retaining one canonical implementation.
+    # Legacy API compatibility while retaining one canonical implementation.
     # These must stay below the docstring: a class body statement placed above a
     # string literal turns that literal into a no-op expression, leaving
     # ``AblationIMV.__doc__`` as None.

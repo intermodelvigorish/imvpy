@@ -34,7 +34,7 @@ directly if an audit requires those low-level controls.
 | `verbose` | `False` | Progress and summary output |
 
 Supported split methods are `kfold`, `stratified_kfold`, `train_test_split`, and
-`stratified_train_test_split`. The default preserves original-notebook behavior;
+`stratified_train_test_split`. The default preserves legacy unstratified behavior;
 `stratified_kfold` is usually preferable for new imbalanced i.i.d. analyses.
 
 ## `MulticlassIMV`
@@ -64,18 +64,6 @@ Pass `target_column` and `prob_column` when using another schema.
 Shared heatmaps default to size `(6, 6)`, coolwarm colors, and three-decimal cell
 annotations. `save_figure` always emits PNG, PDF, and SVG and defaults to 800 DPI
 with `bbox_inches="tight"`.
-
-## Cache environment variables
-
-The library itself does not require a cache. Repository notebooks observe:
-
-| Variable | Default |
-|---|---|
-| `IMV_CACHE_HOME` | `~/.cache/imv` |
-| `IMV_DATA_CACHE` | `$IMV_CACHE_HOME/datasets` |
-| `IMV_ARTIFACT_CACHE` | `$IMV_CACHE_HOME/notebook_artifacts` |
-
-Set them before starting Jupyter so all notebook kernels inherit the values.
 
 ## Reproducibility profiles
 

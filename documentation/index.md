@@ -34,8 +34,6 @@ print(score)
 - Select a task-specific guide for [vanilla IMV](guides/vanilla.md),
   [SHAP-IMV](guides/shap.md), [multiclass IMV](guides/multiclass.md), or
   [model ablation](guides/ablation.md).
-- Use the [example catalogue](examples/index.md) for ten complete, executed
-  analyses with dynamically downloaded public datasets.
 - Use the [API reference](api/core.md) for signatures generated from the source.
 
 ## Scope and guarantees
@@ -56,4 +54,3 @@ decisions.
 This documentation describes `imv` 1.2.0. The package version, documented
 defaults, and Python signatures are checked against one another in the test
 suite.
-

@@ -130,10 +130,9 @@ uses the same return convention.
 | `split_method` | Behavior |
 |---|---|
 | `stratified_kfold` | Recommended shuffled stratified folds for ordinary i.i.d. binary data |
-| `kfold` | Shuffled unstratified folds, retained for original-notebook parity |
+| `kfold` | Shuffled unstratified folds, retained for legacy parity |
 | `stratified_train_test_split` | One stratified holdout using `prop_test` |
 | `train_test_split` | One unstratified holdout, retained for parity |
 
 For grouped or temporal data, construct held-out coalition predictions with a
 custom workflow rather than using an invalid shuffled split.
-

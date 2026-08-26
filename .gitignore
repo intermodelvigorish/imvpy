@@ -53,8 +53,6 @@ tests/figures/
 # ---------------------------------------------------------------------------
 # Local-only working directories
 # ---------------------------------------------------------------------------
-# Superseded pre-reorganisation material, kept on disk for reference only.
-/archive/
 # Generated MkDocs output; the Markdown sources under documentation/ are tracked.
 /site/
 # Trained weights and ad-hoc prediction dumps are far too large to version.
@@ -62,23 +60,18 @@ models/
 saved_predictions/
 
 # ---------------------------------------------------------------------------
-# Generated figures and notebook artifacts
+# Generated figures
 # ---------------------------------------------------------------------------
-# Rendered output is embedded in the executed notebooks. Separate exports are
-# local byproducts and never belong in the repository.
+# Figure exports are local byproducts and never belong in the repository.
 *.png
 *.pdf
 *.svg
-examples/**/figures/
-examples/**/results/
 
 # ---------------------------------------------------------------------------
 # Data and raw model output
 # ---------------------------------------------------------------------------
-# No dataset belongs in this repository. Every example downloads what it needs
-# into a cache outside the working tree, so a cold clone can run them all.
-# Common dataset directories are ignored globally as a second line of defence;
-# the repository-contract test independently rejects data-file extensions.
+# No dataset belongs in this package repository. Common data directories are
+# ignored globally as a second line of defence against accidental commits.
 **/data/
 **/dataset/
 **/datasets/

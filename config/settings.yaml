@@ -99,7 +99,7 @@ profiles:
       stratified: false
       random_state: 42
     ablation_imv:
-      legacy_notebook_optimizer_tolerance_gtol: 1.0e-20
+      legacy_optimizer_tolerance_gtol: 1.0e-20
       legacy_symmetric_display: true
       truthful_directional_output: true
 
@@ -122,8 +122,3 @@ profiles:
       repeated_seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
       directional_matrix: true
       aligned_test_rows_required: true
-
-paper_example_seeds:
-  shap_titanic: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
-  multi_nursery: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
-  ablation: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]

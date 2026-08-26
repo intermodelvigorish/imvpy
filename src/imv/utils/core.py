@@ -479,7 +479,7 @@ def calculate_imv(y_basic, y_enhanced, y=None, epsilon=1e-9, tolerance=1e-09,
         >>> imv = calculate_imv(y_null, y_model, y_true)
         >>> print(f"IMV: {imv:.3f}")  # IMV > 0, feature is useful
 
-        >>> # Constant predictions are broadcast, as in the paper's toy example.
+        >>> # Constant predictions are broadcast, as in the paper's scalar case.
         >>> calculate_imv(0.6, y_model, y_true) > 0
         True
 

@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
-site_name: IMV
+site_name: PyIMV
 site_description: InterModel Vigorish for probabilistic model comparison and attribution
-site_url: https://intermodelvigorish.github.io/imv_ml_package/
-repo_url: https://github.com/intermodelvigorish/imv_ml_package
-repo_name: intermodelvigorish/imv_ml_package
+site_url: https://intermodelvigorish.github.io/PyIMV/
+repo_url: https://github.com/intermodelvigorish/PyIMV
+repo_name: intermodelvigorish/PyIMV
 edit_uri: edit/main/documentation/
 docs_dir: documentation
 site_dir: site
@@ -41,20 +41,6 @@ nav:
       - Multiclass IMV: guides/multiclass.md
       - Model Ablation: guides/ablation.md
       - Plotting and Export: guides/plotting.md
-  - Examples:
-      - Overview: examples/index.md
-      - SHAP-IMV:
-          - Adult Income: examples/shap_imv/adult_income.md
-          - Titanic: examples/shap_imv/titanic.md
-          - Breast Cancer: examples/shap_imv/breast_cancer.md
-      - Multiclass:
-          - Nursery: examples/multi_imv/nursery.md
-          - Car Evaluation: examples/multi_imv/car_evaluation.md
-          - Dry Bean: examples/multi_imv/dry_bean.md
-      - Ablation:
-          - IMDb: examples/ablation_imv/imdb.md
-          - MNIST: examples/ablation_imv/mnist.md
-          - Human Activity Recognition: examples/ablation_imv/har.md
   - API Reference:
       - Core: api/core.md
       - Binary and SHAP-IMV: api/binary.md

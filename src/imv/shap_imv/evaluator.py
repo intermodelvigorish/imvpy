@@ -22,8 +22,8 @@ from joblib import Parallel, delayed
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from tqdm import tqdm
 
-# Import shared IMV core functions. `ll` and `get_w` are re-exported rather than
-# used here: notebook-era code imports them from this module.
+# Import shared IMV core functions. `ll` and `get_w` are re-exported to preserve
+# the legacy module-level API.
 from ..utils.core import calculate_imv, get_w, ll  # noqa: F401
 
 # Try to import tqdm_joblib, if not available, create a simple context manager
