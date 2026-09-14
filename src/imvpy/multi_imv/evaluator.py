@@ -13,14 +13,13 @@ eliminating code duplication across the package.
 
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from sklearn.model_selection import KFold, StratifiedKFold
 
 # Import shared IMV core functions
 from ..utils.core import get_w, ll
+from ..utils.plotting import plot_imv_heatmap, plot_ova_boxplot
 
 
 def _nanmean(values, axis):
@@ -465,7 +464,7 @@ class MulticlassIMV:
             - If ax provided: Returns ax
             
         Visualization Details:
-            - Color scheme: coolwarm (red=high IMV, blue=low IMV)
+            - Color scheme: canonical IMV navy-to-red publication palette
             - Annotations: IMV values displayed in cells (3 decimal places)
             - Labels: "Outcome1", "Outcome2", etc. for rows and columns
             - Diagonal: Always 0 (no self-discrimination)
@@ -476,26 +475,18 @@ class MulticlassIMV:
             >>> plt.tight_layout()
             >>> plt.show()
         """
-        data = np.array(imv_matrix)
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-            created_ax = True
-        else:
-            fig = ax.figure
-            created_ax = False
-
-        num_rows, num_cols = data.shape
-        xlabels = [f'Outcome{i+1}' for i in range(num_cols)]
-        ylabels = [f'Outcome{i+1}' for i in range(num_rows)]
-
-        sns.heatmap(data, annot=True, ax=ax, cmap='coolwarm', fmt=".3f", 
-                   xticklabels=xlabels, yticklabels=ylabels)
-        ax.set_title('IMV Confusion Matrix')
-        
-        if created_ax:
-            return fig, ax
-        return ax
+        data = np.asarray(imv_matrix, dtype=float)
+        if data.ndim != 2:
+            raise ValueError("imv_matrix must be two-dimensional")
+        labels = [f"Outcome{index + 1}" for index in range(data.shape[1])]
+        return plot_imv_heatmap(
+            data,
+            ax=ax,
+            figsize=figsize,
+            title="IMV Confusion Matrix",
+            labels=labels,
+            colorbar_label="Pairwise IMV",
+        )
 
     def multinomial_IMV_boxplot(self, imv_results, figsize=(6, 6), ax=None):
         """
@@ -537,23 +528,18 @@ class MulticlassIMV:
             Narrow boxes indicate stable IMV across folds.
             Wide boxes suggest fold-dependent performance.
         """
-        data_matrix = np.array(imv_results)
-        num_columns = data_matrix.shape[1]
-        labels = [f'Outcome{i+1}' for i in range(num_columns)]
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-            created_ax = True
-        else:
-            created_ax = False
-
-        ax.boxplot(data_matrix, labels=labels)
-        ax.set_title('Multinomial IMV across Different Outcomes')
-        ax.set_ylabel('IMV Value')
-        
-        if created_ax:
-            return fig, ax
-        return ax
+        data_matrix = np.asarray(imv_results, dtype=float)
+        if data_matrix.ndim != 2:
+            raise ValueError("imv_results must be a folds-by-classes matrix")
+        labels = [f"Outcome{index + 1}" for index in range(data_matrix.shape[1])]
+        return plot_ova_boxplot(
+            data_matrix,
+            ax=ax,
+            figsize=figsize,
+            labels=labels,
+            title="Multinomial IMV across Different Outcomes",
+            ylabel="IMV Value",
+        )
 
 
 # Backward compatibility: maintain old class name

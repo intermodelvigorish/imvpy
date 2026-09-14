@@ -207,15 +207,26 @@ available from the base installation.
 
 ## Plotting and Export
 
-Plotting functions accept an existing Matplotlib axis or create one. The shared
-export helper writes PNG at 800 DPI plus PDF and SVG:
+Plotting functions use the package's publication visual system: the canonical
+navy-to-red IMV palette, Helvetica-compatible typography, black-edged marks,
+and restrained dashed grids. They accept an existing Matplotlib axis or create
+one. The shared export helper writes PNG at 800 DPI plus PDF and SVG:
 
 ```python
-from imvpy.utils import save_figure
+import matplotlib.pyplot as plt
+
+from imvpy.utils import plotting_context, save_figure
 
 figure, axis = evaluator.multinomial_IMV_heatmap(mean_matrix)
 paths = save_figure(figure, "artifacts/multiclass_imv")
+
+with plotting_context():
+    custom_figure, custom_axis = plt.subplots()
+    custom_axis.plot([0, 1], [0.1, 0.4])
 ```
+
+The scoped `plotting_context` applies the same visual choices to custom
+Matplotlib panels without changing process-wide defaults.
 
 ## Interpretation
 

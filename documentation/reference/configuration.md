@@ -61,9 +61,11 @@ Pass `target_column` and `prob_column` when using another schema.
 
 ## Plotting
 
-Shared heatmaps default to size `(6, 6)`, coolwarm colors, and three-decimal cell
-annotations. `save_figure` always emits PNG, PDF, and SVG and defaults to 800 DPI
-with `bbox_inches="tight"`.
+Shared heatmaps default to size `(6, 6)`, the custom `imv` navy-to-red colormap,
+and three-decimal cell annotations. The style uses Helvetica where available,
+then Nimbus Sans and DejaVu Sans as portable fallbacks. Interactive figures use
+110 DPI; `save_figure` always emits PNG, PDF, and SVG at 800 DPI with
+`bbox_inches="tight"` and 0.04-inch padding.
 
 ## Reproducibility profiles
 

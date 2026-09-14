@@ -70,14 +70,26 @@ defaults:
       directional: true
 
   plotting:
+    style: imv_publication
+    display_dpi: 110
+    font_candidates: [Helvetica, Nimbus Sans, DejaVu Sans]
+    panel_size: [5.4, 4.6]
+    grid_linestyle: "--"
     heatmap:
       figsize: [6, 6]
       title: "IMV matrix"
-      colormap: coolwarm
+      colormap: imv
       number_format: ".3f"
+      low_color: "#274668"
+      midpoint_color: "#FEE7BA"
+      high_color: "#E66859"
     one_vs_rest_boxplot:
       figsize: [6, 6]
       title: "One-vs-rest IMV across folds"
+    export:
+      dpi: 800
+      formats: [png, pdf, svg]
+      padding_inches: 0.04
     binary_shap_barplot:
       figsize: [12, 4]
     binary_single_variable_violin:

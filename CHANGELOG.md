@@ -12,6 +12,8 @@ All notable changes to IMVpy are documented here. The project follows
 - Array, pandas `Series`, sequence, and scalar inputs for vanilla IMV.
 - Deterministic bracketed inversion of the equivalent-coin likelihood mapping.
 - Shared publication figure export to 800-DPI PNG, PDF, and SVG.
+- The canonical IMV publication palette, typography, panel geometry, annotated
+  bars, framed heatmaps, colorbars, and scoped Matplotlib styling utilities.
 - Strict documentation, package, and repository contract tests.
 - Trusted Publishing workflows for TestPyPI and PyPI.
 - Dedicated CPU-only CI coverage for the optional PyTorch training helpers.

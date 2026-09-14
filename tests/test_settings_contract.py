@@ -14,6 +14,20 @@ from imvpy.utils.core import (
     ll,
     vanilla_imv,
 )
+from imvpy.utils.plotting import (
+    COLORMAP,
+    DISPLAY_DPI,
+    EXPORT_PADDING_INCHES,
+    FIGURE_DPI,
+    FIGURE_FORMATS,
+    FONT_CANDIDATES,
+    GRID_LINESTYLE,
+    PANEL_HEIGHT,
+    PANEL_WIDTH,
+    plot_imv_heatmap,
+    plot_ova_boxplot,
+    save_figure,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SETTINGS = yaml.safe_load((ROOT / "config/settings.yaml").read_text())
@@ -79,8 +93,11 @@ def test_multi_settings_match_constructor():
     documented = SETTINGS["defaults"]["multi_imv"]
     actual = defaults(MulticlassIMV)
     for name in [
-        "n_splits", "optional_explanatory_variables", "random_state",
-        "stratified", "verbose",
+        "n_splits",
+        "optional_explanatory_variables",
+        "random_state",
+        "stratified",
+        "verbose",
     ]:
         assert documented[name] == actual[name]
 
@@ -97,3 +114,24 @@ def test_ablation_settings_match_training_signatures():
     matrix = defaults(AblationIMV.calculate_imv_matrix)
     assert matrix["target_column"] == documented["prediction_columns"]["target"]
     assert matrix["prob_column"] == documented["prediction_columns"]["positive_probability"]
+
+
+def test_plotting_settings_match_public_helpers():
+    documented = SETTINGS["defaults"]["plotting"]
+    heatmap = defaults(plot_imv_heatmap)
+    boxplot = defaults(plot_ova_boxplot)
+    export = documented["export"]
+
+    assert documented["display_dpi"] == DISPLAY_DPI
+    assert documented["font_candidates"] == list(FONT_CANDIDATES)
+    assert documented["panel_size"] == [PANEL_WIDTH, PANEL_HEIGHT]
+    assert documented["grid_linestyle"] == GRID_LINESTYLE
+    assert documented["heatmap"]["figsize"] == list(heatmap["figsize"])
+    assert documented["heatmap"]["title"] == heatmap["title"]
+    assert documented["heatmap"]["colormap"] == heatmap["cmap"] == COLORMAP
+    assert documented["heatmap"]["number_format"] == heatmap["fmt"]
+    assert documented["one_vs_rest_boxplot"]["figsize"] == list(boxplot["figsize"])
+    assert documented["one_vs_rest_boxplot"]["title"] == boxplot["title"]
+    assert export["dpi"] == defaults(save_figure)["dpi"] == FIGURE_DPI
+    assert export["formats"] == list(FIGURE_FORMATS)
+    assert export["padding_inches"] == EXPORT_PADDING_INCHES

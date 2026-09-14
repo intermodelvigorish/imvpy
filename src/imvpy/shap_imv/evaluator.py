@@ -25,6 +25,16 @@ from tqdm import tqdm
 # Import shared IMV core functions. `ll` and `get_w` are re-exported to preserve
 # the legacy module-level API.
 from ..utils.core import calculate_imv, get_w, ll  # noqa: F401
+from ..utils.plotting import (
+    AXIS_COLOR,
+    BAR_EDGE_COLOR,
+    EDGE_WIDTH,
+    TEXT_COLOR,
+    categorical_colors,
+    plotting_context,
+    spectral_colors,
+    style_axis,
+)
 
 # Try to import tqdm_joblib, if not available, create a simple context manager
 try:
@@ -311,7 +321,7 @@ class BinaryIMV:
             - X-axis: IMV scores
             - Y-axis: Variable names
             - Inner quartiles shown within violins
-            - Color scheme: coolwarm palette
+            - Color scheme: canonical IMV publication palette
             
         Note:
             Must call run_evaluation() before plotting.
@@ -334,18 +344,32 @@ class BinaryIMV:
                     data.append({'Variable': ', '.join(combination), 'IMV Score': score})
             df = pd.DataFrame(data)
 
-            if ax is None:
-                fig, ax = plt.subplots(figsize=figsize)
-                created_ax = True
-            else:
-                created_ax = False
-                
-            # hue+legend=False rather than a bare palette: seaborn removes the
-            # bare-palette form in 0.14.
-            sns.violinplot(x='IMV Score', y='Variable', data=df, inner='quartile',
-                          hue='Variable', palette='coolwarm', legend=False,
-                          orient='h', ax=ax)
-            ax.set_title('Single Variable Model vs Null Model')
+            with plotting_context():
+                if ax is None:
+                    fig, ax = plt.subplots(figsize=figsize)
+                    created_ax = True
+                else:
+                    created_ax = False
+
+                # hue+legend=False rather than a bare palette: seaborn removes
+                # the bare-palette form in 0.14.
+                sns.violinplot(
+                    x="IMV Score",
+                    y="Variable",
+                    data=df,
+                    inner="quartile",
+                    hue="Variable",
+                    palette=categorical_colors(len(single_var_combinations)),
+                    legend=False,
+                    orient="h",
+                    ax=ax,
+                )
+                for collection in ax.collections:
+                    collection.set_edgecolor(BAR_EDGE_COLOR)
+                    collection.set_linewidth(EDGE_WIDTH)
+                style_axis(ax, grid_axis="x")
+                ax.axvline(0, color=AXIS_COLOR, linewidth=EDGE_WIDTH)
+                ax.set_title("Single Variable Model vs Null Model")
             
             if created_ax:
                 return fig, ax
@@ -493,9 +517,9 @@ class BinaryIMV:
                 
         Visualization Details:
             - Bars sorted by SHAP-IMV value (descending)
-            - Color gradient from coolwarm_r colormap
+            - Color gradient from the canonical IMV publication palette
+            - Thin black bar outlines and dashed value-axis grid
             - Values displayed on bars
-            - Whitegrid style for easy reading
             
         Process:
             1. Compute SHAP-IMV for each variable
@@ -525,28 +549,40 @@ class BinaryIMV:
         n_bars = len(sorted_keys)
         total_height_in = max(figsize[1], n_bars * 0.5)
 
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(figsize[0], total_height_in))
-            created_ax = True
-        else:
-            created_ax = False
+        with plotting_context():
+            if ax is None:
+                fig, ax = plt.subplots(figsize=(figsize[0], total_height_in))
+                created_ax = True
+            else:
+                created_ax = False
 
-        sns.set_style("whitegrid")
+            positions = np.arange(n_bars)
+            ax.barh(
+                positions,
+                sorted_values,
+                color=spectral_colors(n_bars),
+                edgecolor=BAR_EDGE_COLOR,
+                linewidth=EDGE_WIDTH,
+            )
+            ax.set_yticks(positions, labels=sorted_keys)
+            ax.invert_yaxis()
+            for index, value in enumerate(sorted_values):
+                positive = value >= 0
+                ax.annotate(
+                    str(value),
+                    (value, index),
+                    xytext=(4 if positive else -4, 0),
+                    textcoords="offset points",
+                    ha="left" if positive else "right",
+                    va="center",
+                    color=TEXT_COLOR,
+                )
 
-        norm = plt.Normalize(min(sorted_values), max(sorted_values))
-        cmap = plt.get_cmap("coolwarm_r")
-        colors = cmap(norm(sorted_values))
-
-        # hue+legend=False rather than a bare palette: seaborn removes the
-        # bare-palette form in 0.14.
-        sns.barplot(x=sorted_values, y=sorted_keys, hue=sorted_keys,
-                    palette=list(colors), legend=False, orient='h', ax=ax)
-
-        for index, value in enumerate(sorted_values):
-            ax.text(value, index, str(value), va='center')
-
-        ax.set_xlabel('IMVShapley Value')
-        ax.set_title('IMVShapley Values')
+            style_axis(ax, grid_axis="x")
+            ax.axvline(0, color=AXIS_COLOR, linewidth=EDGE_WIDTH)
+            ax.margins(x=0.12)
+            ax.set_xlabel("IMVShapley Value")
+            ax.set_title("IMVShapley Values")
 
         if created_ax:
             return fig, ax
