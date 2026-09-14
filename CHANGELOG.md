@@ -18,7 +18,8 @@ All notable changes to IMVpy are documented here. The project follows
 
 ### Changed
 
-- Package metadata now uses the current PEP 639 license format.
+- The project is licensed under GNU GPL v3.0 only using the PEP 639
+  `GPL-3.0-only` expression.
 - The repository is package-only; research replication materials are maintained
   separately.
 

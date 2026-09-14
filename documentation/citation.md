@@ -38,5 +38,5 @@ to the repository landing page.
 
 ## License
 
-The package is distributed under the MIT License. See the repository `LICENSE`
-file for the full terms.
+The package is distributed under the GNU General Public License v3.0 only
+(`GPL-3.0-only`). See the repository `LICENSE` file for the full terms.

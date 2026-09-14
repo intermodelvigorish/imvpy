@@ -10,7 +10,7 @@ authors:
 version: 1.2.0
 repository-code: "https://github.com/intermodelvigorish/imvpy"
 url: "https://intermodelvigorish.github.io/imvpy/"
-license: MIT
+license: GPL-3.0-only
 preferred-citation:
   type: article
   authors:

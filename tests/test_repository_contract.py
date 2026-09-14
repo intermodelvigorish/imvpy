@@ -80,8 +80,11 @@ def test_project_metadata_targets_the_standalone_package_repository():
     readme = (ROOT / "README.md").read_text()
 
     assert project["name"] == "imvpy"
-    assert project["license"] == "MIT"
+    assert project["license"] == "GPL-3.0-only"
     assert project["license-files"] == ["LICENSE"]
+    license_text = (ROOT / "LICENSE").read_text()
+    assert "GNU GENERAL PUBLIC LICENSE" in license_text
+    assert "Version 3, 29 June 2007" in license_text
     assert project["readme"]["content-type"] == "text/markdown"
     assert project["requires-python"] == ">=3.9"
     assert project["urls"]["Repository"] == "https://github.com/intermodelvigorish/imvpy"
@@ -111,7 +114,7 @@ def test_release_support_files_are_present_and_versioned():
 
     citation = yaml.safe_load((ROOT / "CITATION.cff").read_text())
     assert citation["version"] == PYPROJECT["project"]["version"]
-    assert citation["license"] == "MIT"
+    assert citation["license"] == "GPL-3.0-only"
     assert citation["preferred-citation"]["doi"] == "10.1371/journal.pone.0316491"
 
 

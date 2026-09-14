@@ -8,7 +8,7 @@ version = "1.2.0"
 description = "InterModel Vigorish for probabilistic model comparison and attribution"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
-license = "MIT"
+license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 authors = [{name = "Valler Y."}]
 maintainers = [{name = "Charles Rahal"}]

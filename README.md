@@ -8,7 +8,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/imvpy.svg)](https://pypi.org/project/imvpy/)
 [![CI](https://github.com/intermodelvigorish/imvpy/actions/workflows/ci.yml/badge.svg)](https://github.com/intermodelvigorish/imvpy/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-IMVpy-0f766e.svg)](https://intermodelvigorish.github.io/imvpy/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/intermodelvigorish/imvpy/blob/main/LICENSE)
+[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue.svg)](https://github.com/intermodelvigorish/imvpy/blob/main/LICENSE)
 
 </div>
 
@@ -258,4 +258,4 @@ and record the exact package version when reporting software-derived results.
 ## License
 
 IMVpy is distributed under the
-[MIT License](https://github.com/intermodelvigorish/imvpy/blob/main/LICENSE).
+[GNU General Public License v3.0 only](https://github.com/intermodelvigorish/imvpy/blob/main/LICENSE).
