@@ -3,7 +3,7 @@
 All notable changes to IMVpy are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.0 - 2026-09-14
 
 ### Added
 
@@ -29,6 +29,3 @@ All notable changes to IMVpy are documented here. The project follows
 
 - Probability validation, below-chance likelihood handling, directional
   ablation output, and multiclass class-column alignment.
-
-Before publishing a release, move the relevant entries into a versioned section
-with its release date.
